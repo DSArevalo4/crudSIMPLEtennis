@@ -1,32 +1,43 @@
+# config/database.py
 import os
-import sys
 import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import OperationalError
+from dotenv import load_dotenv
 
-# Asegura que el directorio raíz esté en sys.path para imports relativos
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Ruta absoluta al archivo de la base de datos ETL
-SQLITE_URI = '/workspaces/crudSIMPLEtennis/atp_tour_2004.db'
+# Importamos Base desde models.base
+from models.base import Base  
 
 logging.basicConfig(level=logging.INFO)
 
+load_dotenv()
+
+MYSQL_URI = os.getenv('MYSQL_URI')
+SQLITE_URI = 'sqlite:///atp_tour_2004_local.db'
+
 def get_engine():
-    """
-    Crea una conexión exclusiva a la base de datos SQLite ETL.
-    """
+    if MYSQL_URI:
+        try:
+            engine = create_engine(MYSQL_URI, echo=True)
+            conn = engine.connect()
+            conn.close()
+            logging.info('Conexión a MySQL exitosa.')
+            return engine
+        except OperationalError:
+            logging.warning('No se pudo conectar a MySQL. Usando SQLite local.')
     engine = create_engine(SQLITE_URI, echo=True)
     return engine
 
 # Obtener el motor de la base de datos
 engine = get_engine()
 
-# Crear la sesión para interactuar con la base de datos
+# Crear las tablas si no existen, importando los modelos después de definir Base
+from models.torneo_model import Torneo  # Importamos los modelos después de crear el motor
+
+Base.metadata.create_all(engine)
+
 Session = sessionmaker(bind=engine)
 
 def get_db_session():
-    """
-    Retorna una nueva sesión de base de datos para ser utilizada en los servicios o controladores.
-    """
     return Session()

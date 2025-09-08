@@ -1,10 +1,11 @@
-from sqlalchemy import Column, String, Date
-from models.base import Base
+# models/torneo_model.py
+from sqlalchemy import Column, String, Date, Integer
+from models.base import Base  # Ahora importamos Base desde models.base
 
 class Torneo(Base):
     __tablename__ = 'torneos'
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     nombre = Column(String, nullable=False)
     superficie = Column(String)
     nivel = Column(String)
@@ -16,5 +17,5 @@ class Torneo(Base):
             'nombre': self.nombre,
             'superficie': self.superficie,
             'nivel': self.nivel,
-            'fecha': self.fecha.isoformat() if self.fecha else None
+            'fecha': self.fecha
         }

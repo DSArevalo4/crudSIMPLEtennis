@@ -11,12 +11,11 @@ class TorneoRepository:
         return self.db.query(Torneo).filter(Torneo.id == torneo_id).first()
 
     def crear_torneo(self, data):
-        required_fields = ['id', 'nombre', 'superficie', 'nivel', 'fecha']
+        required_fields = ['nombre', 'superficie', 'nivel', 'fecha']
         for field in required_fields:
             if field not in data or data[field] is None:
                 raise ValueError(f'El campo {field} es obligatorio')
         torneo = Torneo(
-            id=data['id'],
             nombre=data['nombre'],
             superficie=data['superficie'],
             nivel=data['nivel'],

@@ -44,15 +44,26 @@ HTML = '''
             margin: 0;
             letter-spacing: 1px;
         }
-        .navbar nav a {
-            color: var(--berenjena);
-            text-decoration: none;
-            margin-left: 1.5em;
-            font-weight: 500;
-            transition: color 0.2s;
+        .main-btns {
+            display: flex;
+            justify-content: center;
+            gap: 2em;
+            margin: 2em 0 1em 0;
         }
-        .navbar nav a:hover {
-            color: var(--azul-real);
+        .main-btn {
+            background: var(--azul-real);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1em 2.5em;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 2px 8px rgba(74,139,223,0.08);
+        }
+        .main-btn:hover {
+            background: #2561a8;
         }
         .container {
             max-width: 600px;
@@ -62,36 +73,53 @@ HTML = '''
             box-shadow: 0 4px 24px rgba(74,139,223,0.08);
             padding: 2em 1.5em 1.5em 1.5em;
         }
-        .crud-btns {
+        .list {
+            margin-top: 1em;
+        }
+        .item {
             display: flex;
-            flex-wrap: wrap;
-            gap: 1em;
-            margin-bottom: 1.5em;
-            justify-content: center;
-        }
-        .crud-btn {
-            flex: 1 1 120px;
-            padding: 0.8em 0;
-            border: none;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--azul-palido);
             border-radius: 10px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-            box-shadow: 0 2px 8px rgba(160,0,109,0.04);
+            padding: 0.7em 1em;
+            margin-bottom: 0.7em;
+            border: 1px solid var(--borde);
         }
-        .btn-crear { background: var(--azul-real); color: white; }
-        .btn-crear:hover { background: #2561a8; }
-        .btn-ver { background: var(--azul-palido); color: var(--azul-real); border: 1.5px solid var(--azul-real); }
-        .btn-ver:hover { background: var(--azul-real); color: white; }
+        .item-info {
+            flex: 1;
+        }
+        .item-actions {
+            display: flex;
+            gap: 0.5em;
+        }
+        .btn-editar, .btn-eliminar, .btn-crear {
+            border: none;
+            border-radius: 8px;
+            padding: 0.5em 1.2em;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
         .btn-editar { background: var(--berenjena); color: white; }
         .btn-editar:hover { background: #6d004a; }
         .btn-eliminar { background: white; color: var(--berenjena); border: 1.5px solid var(--berenjena); }
         .btn-eliminar:hover { background: var(--berenjena); color: white; }
-        form {
-            display: flex;
+        .btn-crear { background: var(--azul-real); color: white; margin-top: 1em; width: 100%; }
+        .btn-crear:hover { background: #2561a8; }
+        .form-modal {
+            display: none;
             flex-direction: column;
             gap: 0.7em;
+            background: var(--gris);
+            border-radius: 12px;
+            padding: 1.5em;
+            margin-top: 1em;
+            box-shadow: 0 2px 8px rgba(160,0,109,0.08);
+        }
+        .form-modal.active {
+            display: flex;
         }
         label {
             font-weight: 500;
@@ -115,108 +143,185 @@ HTML = '''
         @media (max-width: 700px) {
             .container { max-width: 98vw; padding: 1em 0.5em; }
             .navbar { flex-direction: column; align-items: flex-start; padding: 1em 1em; }
-            .crud-btns { flex-direction: column; gap: 0.7em; }
+            .main-btns { flex-direction: column; gap: 1em; }
         }
     </style>
 </head>
 <body>
     <div class="navbar">
         <h1>API Tenis</h1>
-        <nav>
-            <a href="#torneos">Torneos</a>
-            <a href="#partidos">Partidos</a>
-        </nav>
+    </div>
+    <div class="main-btns">
+        <button class="main-btn" onclick="showSection('torneos')">Torneos</button>
+        <button class="main-btn" onclick="showSection('partidos')">Partidos</button>
     </div>
     <div class="container">
-        <h2 id="torneos">Torneos</h2>
-        <div class="crud-btns">
-            <button class="crud-btn btn-crear" onclick="showForm('crear-torneo')">Crear</button>
-            <button class="crud-btn btn-ver" onclick="showForm('ver-torneo')">Ver</button>
-            <button class="crud-btn btn-editar" onclick="showForm('editar-torneo')">Editar</button>
-            <button class="crud-btn btn-eliminar" onclick="showForm('eliminar-torneo')">Eliminar</button>
+        <div id="torneos-section" style="display:none">
+            <h2>Torneos</h2>
+            <div id="torneos-list" class="list"></div>
+            <button class="btn-crear" onclick="showTorneoForm()">Crear Torneo</button>
+            <form id="torneo-form" class="form-modal">
+                <input type="hidden" name="id" id="torneo-form-id">
+                <label>Nombre: <input name="nombre" id="torneo-form-nombre" required></label>
+                <label>Superficie: <input name="superficie" id="torneo-form-superficie"></label>
+                <label>Nivel: <input name="nivel" id="torneo-form-nivel"></label>
+                <label>Fecha: <input name="fecha" id="torneo-form-fecha" placeholder="YYYY-MM-DD"></label>
+                <button class="btn-crear" type="submit">Guardar</button>
+                <button type="button" class="btn-eliminar" onclick="closeTorneoForm()">Cancelar</button>
+            </form>
         </div>
-        <form id="crear-torneo" style="display:none" method="post" action="/test_api">
-            <input type="hidden" name="action" value="post_torneo">
-            <label>ID Torneo: <input name="torneo_id" required></label>
-            <label>Nombre: <input name="nombre" required></label>
-            <label>Superficie: <input name="superficie"></label>
-            <label>Nivel: <input name="nivel"></label>
-            <label>Fecha: <input name="fecha" placeholder="YYYY-MM-DD"></label>
-            <button class="crud-btn btn-crear" type="submit">Crear</button>
-        </form>
-        <form id="ver-torneo" style="display:none" method="post" action="/test_api">
-            <input type="hidden" name="action" value="get_torneo">
-            <label>ID Torneo: <input name="torneo_id" required></label>
-            <button class="crud-btn btn-ver" type="submit">Ver</button>
-        </form>
-        <form id="editar-torneo" style="display:none" method="post" action="/test_api">
-            <input type="hidden" name="action" value="put_torneo">
-            <label>ID Torneo: <input name="torneo_id" required></label>
-            <label>Nombre: <input name="nombre"></label>
-            <label>Superficie: <input name="superficie"></label>
-            <label>Nivel: <input name="nivel"></label>
-            <label>Fecha: <input name="fecha" placeholder="YYYY-MM-DD"></label>
-            <button class="crud-btn btn-editar" type="submit">Editar</button>
-        </form>
-        <form id="eliminar-torneo" style="display:none" method="post" action="/test_api">
-            <input type="hidden" name="action" value="delete_torneo">
-            <label>ID Torneo: <input name="torneo_id" required></label>
-            <button class="crud-btn btn-eliminar" type="submit">Eliminar</button>
-        </form>
-        <h2 id="partidos" style="margin-top:2.5em;">Partidos</h2>
-        <div class="crud-btns">
-            <button class="crud-btn btn-crear" onclick="showForm('crear-partido')">Crear</button>
-            <button class="crud-btn btn-ver" onclick="showForm('ver-partido')">Ver</button>
-            <button class="crud-btn btn-editar" onclick="showForm('editar-partido')">Editar</button>
-            <button class="crud-btn btn-eliminar" onclick="showForm('eliminar-partido')">Eliminar</button>
+        <div id="partidos-section" style="display:none">
+            <h2>Partidos</h2>
+            <div id="partidos-list" class="list"></div>
+            <button class="btn-crear" onclick="showPartidoForm()">Crear Partido</button>
+            <form id="partido-form" class="form-modal">
+                <input type="hidden" name="id" id="partido-form-id">
+                <label>Torneo ID: <input name="torneo_id" id="partido-form-torneo_id" required></label>
+                <label>Ganador ID: <input name="ganador_id" id="partido-form-ganador_id" required></label>
+                <label>Perdedor ID: <input name="perdedor_id" id="partido-form-perdedor_id" required></label>
+                <label>Resultado: <input name="resultado" id="partido-form-resultado"></label>
+                <label>Fecha: <input name="fecha" id="partido-form-fecha" placeholder="YYYY-MM-DD"></label>
+                <button class="btn-crear" type="submit">Guardar</button>
+                <button type="button" class="btn-eliminar" onclick="closePartidoForm()">Cancelar</button>
+            </form>
         </div>
-        <form id="crear-partido" style="display:none" method="post" action="/test_api">
-            <input type="hidden" name="action" value="post_partido">
-            <label>Torneo ID: <input name="torneo_id" required></label>
-            <label>Ganador ID: <input name="ganador_id" required></label>
-            <label>Perdedor ID: <input name="perdedor_id" required></label>
-            <label>Resultado: <input name="resultado"></label>
-            <label>Fecha: <input name="fecha" placeholder="YYYY-MM-DD"></label>
-            <button class="crud-btn btn-crear" type="submit">Crear</button>
-        </form>
-        <form id="ver-partido" style="display:none" method="post" action="/test_api">
-            <input type="hidden" name="action" value="get_partido">
-            <label>ID Partido: <input name="partido_id" required></label>
-            <button class="crud-btn btn-ver" type="submit">Ver</button>
-        </form>
-        <form id="editar-partido" style="display:none" method="post" action="/test_api">
-            <input type="hidden" name="action" value="put_partido">
-            <label>ID Partido: <input name="partido_id" required></label>
-            <label>Torneo ID: <input name="torneo_id"></label>
-            <label>Ganador ID: <input name="ganador_id"></label>
-            <label>Perdedor ID: <input name="perdedor_id"></label>
-            <label>Resultado: <input name="resultado"></label>
-            <label>Fecha: <input name="fecha" placeholder="YYYY-MM-DD"></label>
-            <button class="crud-btn btn-editar" type="submit">Editar</button>
-        </form>
-        <form id="eliminar-partido" style="display:none" method="post" action="/test_api">
-            <input type="hidden" name="action" value="delete_partido">
-            <label>ID Partido: <input name="partido_id" required></label>
-            <button class="crud-btn btn-eliminar" type="submit">Eliminar</button>
-        </form>
-        {% if result %}
-        <div class="result">
-            <strong>Respuesta:</strong>
-            <pre>{{ result }}</pre>
-        </div>
-        {% endif %}
+        <div id="result" class="result" style="display:none"></div>
     </div>
     <script>
-        function showForm(formId) {
-            const forms = [
-                'crear-torneo','ver-torneo','editar-torneo','eliminar-torneo',
-                'crear-partido','ver-partido','editar-partido','eliminar-partido'
-            ];
-            forms.forEach(id => {
-                document.getElementById(id).style.display = 'none';
+        function showSection(section) {
+            document.getElementById('torneos-section').style.display = section === 'torneos' ? 'block' : 'none';
+            document.getElementById('partidos-section').style.display = section === 'partidos' ? 'block' : 'none';
+            document.getElementById('result').style.display = 'none';
+            if(section === 'torneos') loadTorneos();
+            if(section === 'partidos') loadPartidos();
+        }
+        // --- TORNEOS CRUD ---
+        function loadTorneos() {
+            fetch('/api/torneos').then(r=>r.json()).then(data=>{
+                const list = document.getElementById('torneos-list');
+                list.innerHTML = '';
+                data.forEach(t=>{
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = `<div class='item-info'><b>${t.nombre}</b> (${t.nivel})<br><small>${t.superficie} - ${t.fecha||''}</small></div>
+                        <div class='item-actions'>
+                            <button class='btn-editar' onclick='editTorneo(${JSON.stringify(t)})'>Editar</button>
+                            <button class='btn-eliminar' onclick='deleteTorneo("${t.id}")'>Eliminar</button>
+                        </div>`;
+                    list.appendChild(div);
+                });
             });
-            document.getElementById(formId).style.display = 'flex';
-            window.scrollTo({top: document.getElementById(formId).offsetTop-80, behavior:'smooth'});
+        }
+        function showTorneoForm(t=null) {
+            const form = document.getElementById('torneo-form');
+            form.classList.add('active');
+            if(t) {
+                document.getElementById('torneo-form-id').value = t.id;
+                document.getElementById('torneo-form-nombre').value = t.nombre;
+                document.getElementById('torneo-form-superficie').value = t.superficie;
+                document.getElementById('torneo-form-nivel').value = t.nivel;
+                document.getElementById('torneo-form-fecha').value = t.fecha||'';
+            } else {
+                form.reset();
+                document.getElementById('torneo-form-id').value = '';
+            }
+        }
+        function closeTorneoForm() {
+            document.getElementById('torneo-form').classList.remove('active');
+            document.getElementById('torneo-form').reset();
+            document.getElementById('torneo-form-id').value = '';
+        }
+        function editTorneo(t) {
+            showTorneoForm(t);
+        }
+        function deleteTorneo(id) {
+            if(confirm('¿Eliminar torneo?')) {
+                fetch(`/api/torneos/${id}`, {method:'DELETE'}).then(r=>r.text()).then(msg=>{
+                    showResult(msg); loadTorneos();
+                });
+            }
+        }
+        document.getElementById('torneo-form').onsubmit = function(e) {
+            e.preventDefault();
+            const id = document.getElementById('torneo-form-id').value;
+            const data = {
+                nombre: document.getElementById('torneo-form-nombre').value,
+                superficie: document.getElementById('torneo-form-superficie').value,
+                nivel: document.getElementById('torneo-form-nivel').value,
+                fecha: document.getElementById('torneo-form-fecha').value
+            };
+            let url = '/api/torneos', method = 'POST';
+            if(id) { url += `/${id}`; method = 'PUT'; }
+            fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)})
+                .then(r=>r.text()).then(msg=>{ showResult(msg); closeTorneoForm(); loadTorneos(); });
+        };
+        // --- PARTIDOS CRUD ---
+        function loadPartidos() {
+            fetch('/api/partidos').then(r=>r.json()).then(data=>{
+                const list = document.getElementById('partidos-list');
+                list.innerHTML = '';
+                data.forEach(p=>{
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = `<div class='item-info'><b>${p.resultado||''}</b> - Torneo: ${p.torneo_id}<br><small>Ganador: ${p.ganador_id} | Perdedor: ${p.perdedor_id} | ${p.fecha||''}</small></div>
+                        <div class='item-actions'>
+                            <button class='btn-editar' onclick='editPartido(${JSON.stringify(p)})'>Editar</button>
+                            <button class='btn-eliminar' onclick='deletePartido("${p.id}")'>Eliminar</button>
+                        </div>`;
+                    list.appendChild(div);
+                });
+            });
+        }
+        function showPartidoForm(p=null) {
+            const form = document.getElementById('partido-form');
+            form.classList.add('active');
+            if(p) {
+                document.getElementById('partido-form-id').value = p.id;
+                document.getElementById('partido-form-torneo_id').value = p.torneo_id;
+                document.getElementById('partido-form-ganador_id').value = p.ganador_id;
+                document.getElementById('partido-form-perdedor_id').value = p.perdedor_id;
+                document.getElementById('partido-form-resultado').value = p.resultado||'';
+                document.getElementById('partido-form-fecha').value = p.fecha||'';
+            } else {
+                form.reset();
+                document.getElementById('partido-form-id').value = '';
+            }
+        }
+        function closePartidoForm() {
+            document.getElementById('partido-form').classList.remove('active');
+            document.getElementById('partido-form').reset();
+            document.getElementById('partido-form-id').value = '';
+        }
+        function editPartido(p) {
+            showPartidoForm(p);
+        }
+        function deletePartido(id) {
+            if(confirm('¿Eliminar partido?')) {
+                fetch(`/api/partidos/${id}`, {method:'DELETE'}).then(r=>r.text()).then(msg=>{
+                    showResult(msg); loadPartidos();
+                });
+            }
+        }
+        document.getElementById('partido-form').onsubmit = function(e) {
+            e.preventDefault();
+            const id = document.getElementById('partido-form-id').value;
+            const data = {
+                torneo_id: document.getElementById('partido-form-torneo_id').value,
+                ganador_id: document.getElementById('partido-form-ganador_id').value,
+                perdedor_id: document.getElementById('partido-form-perdedor_id').value,
+                resultado: document.getElementById('partido-form-resultado').value,
+                fecha: document.getElementById('partido-form-fecha').value
+            };
+            let url = '/api/partidos', method = 'POST';
+            if(id) { url += `/${id}`; method = 'PUT'; }
+            fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)})
+                .then(r=>r.text()).then(msg=>{ showResult(msg); closePartidoForm(); loadPartidos(); });
+        };
+        function showResult(msg) {
+            const r = document.getElementById('result');
+            r.innerText = msg;
+            r.style.display = 'block';
+            setTimeout(()=>{r.style.display='none';}, 4000);
         }
     </script>
 </body>
@@ -242,7 +347,6 @@ def test_api():
         result = r.text
     elif action == 'post_torneo':
         data = {
-            'id': request.form.get('torneo_id'),
             'nombre': request.form.get('nombre'),
             'superficie': request.form.get('superficie'),
             'nivel': request.form.get('nivel'),
