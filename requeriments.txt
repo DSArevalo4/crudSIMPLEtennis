@@ -1,0 +1,5 @@
+Flask
+sqlalchemy
+pymysql
+python-dotenv
+requests
