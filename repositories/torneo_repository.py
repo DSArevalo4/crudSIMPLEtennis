@@ -5,12 +5,15 @@ class TorneoRepository:
         self.db = db_session
 
     def listar_torneos(self):
+        """Recupera todos los torneos desde la base de datos."""
         return self.db.query(Torneo).all()
 
     def obtener_torneo(self, torneo_id):
+        """Recupera un torneo por su ID."""
         return self.db.query(Torneo).filter(Torneo.id == torneo_id).first()
 
     def crear_torneo(self, data):
+        """Crea un nuevo torneo en la base de datos."""
         required_fields = ['nombre', 'superficie', 'nivel', 'fecha']
         for field in required_fields:
             if field not in data or data[field] is None:
@@ -27,6 +30,7 @@ class TorneoRepository:
         return torneo
 
     def actualizar_torneo(self, torneo_id, data):
+        """Actualiza un torneo existente en la base de datos."""
         torneo = self.db.query(Torneo).filter(Torneo.id == torneo_id).first()
         if not torneo:
             return None
@@ -38,6 +42,7 @@ class TorneoRepository:
         return torneo
 
     def eliminar_torneo(self, torneo_id):
+        """Elimina un torneo por su ID."""
         torneo = self.db.query(Torneo).filter(Torneo.id == torneo_id).first()
         if not torneo:
             return False

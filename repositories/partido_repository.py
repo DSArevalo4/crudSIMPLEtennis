@@ -5,12 +5,15 @@ class PartidoRepository:
         self.db = db_session
 
     def listar_partidos(self):
+        """Recupera todos los partidos desde la base de datos."""
         return self.db.query(Partido).all()
 
     def obtener_partido(self, partido_id):
+        """Recupera un partido por su ID."""
         return self.db.query(Partido).filter(Partido.id == partido_id).first()
 
     def crear_partido(self, data):
+        """Crea un nuevo partido en la base de datos."""
         required_fields = ['torneo_id', 'ganador_id', 'perdedor_id', 'resultado', 'fecha']
         for field in required_fields:
             if field not in data or data[field] is None:
@@ -28,6 +31,7 @@ class PartidoRepository:
         return partido
 
     def actualizar_partido(self, partido_id, data):
+        """Actualiza un partido existente en la base de datos."""
         partido = self.db.query(Partido).filter(Partido.id == partido_id).first()
         if not partido:
             return None
@@ -39,6 +43,7 @@ class PartidoRepository:
         return partido
 
     def eliminar_partido(self, partido_id):
+        """Elimina un partido por su ID."""
         partido = self.db.query(Partido).filter(Partido.id == partido_id).first()
         if not partido:
             return False
