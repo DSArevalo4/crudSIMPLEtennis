@@ -1,13 +1,21 @@
 from flask import Flask, render_template_string, request, jsonify
 from controllers.torneo_controller import torneo_bp
 from controllers.partido_controller import partido_bp
+from controllers.usuario_controller import usuario_bp
+from controllers.inscripcion_controller import inscripcion_bp
+from controllers.cuadro_controller import cuadro_bp
+from controllers.notificacion_controller import notificacion_bp
 import requests
 
 app = Flask(__name__)
 
-# Registrar los blueprints de torneos y partidos
+# Registrar todos los blueprints
 app.register_blueprint(torneo_bp, url_prefix='/api')
 app.register_blueprint(partido_bp, url_prefix='/api')
+app.register_blueprint(usuario_bp, url_prefix='/api')
+app.register_blueprint(inscripcion_bp, url_prefix='/api')
+app.register_blueprint(cuadro_bp, url_prefix='/api')
+app.register_blueprint(notificacion_bp, url_prefix='/api')
 
 HTML = '''
 <!DOCTYPE html>
