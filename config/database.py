@@ -4,18 +4,20 @@ import sys
 import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
+from dotenv import load_dotenv
+logging.basicConfig(level=logging.INFO)
+
+# Cargar variables de entorno desde .env
+load_dotenv()
 
 # Asegura que el directorio raíz esté en sys.path para imports relativos
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Configuración de la base de datos MySQL
-MYSQL_USER = 'Santy'
-MYSQL_PASSWORD = 'C0ntr4s3ñ4d1f1c1l'
-MYSQL_HOST = 'localhost'
-MYSQL_DATABASE = 'atp_tour_2004'
 
-# URI de conexión MySQL
-MYSQL_URI = f'mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DATABASE}'
+
+MYSQL_URI = os.getenv('MYSQL_URI')
+SQLITE_URI = 'sqlite:///atp_tour_2004_local.db'
+
 
 logging.basicConfig(level=logging.INFO)
 

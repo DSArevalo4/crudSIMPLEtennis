@@ -2,3 +2,6 @@ Flask
 SQLAlchemy
 pymysql
 requests
+Flask-JWT-Extended
+bcrypt
+python-dotenv

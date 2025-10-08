@@ -1,15 +1,27 @@
 from flask import Flask, render_template_string, request, jsonify
+from flask_jwt_extended import JWTManager
 from controllers.torneo_controller import torneo_bp
 from controllers.partido_controller import partido_bp
 from controllers.usuario_controller import usuario_bp
 from controllers.inscripcion_controller import inscripcion_bp
 from controllers.cuadro_controller import cuadro_bp
 from controllers.notificacion_controller import notificacion_bp
+from controllers.auth_controller import auth_bp, register_jwt_error_handlers
+from config.jwt_config import JWT_SECRET_KEY, JWT_ACCESS_TOKEN_EXPIRES
 import requests
 
 app = Flask(__name__)
 
+# Configurar JWT
+app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = JWT_ACCESS_TOKEN_EXPIRES
+jwt = JWTManager(app)
+
+# Registrar manejadores de errores JWT
+register_jwt_error_handlers(app)
+
 # Registrar todos los blueprints
+app.register_blueprint(auth_bp, url_prefix='/api')
 app.register_blueprint(torneo_bp, url_prefix='/api')
 app.register_blueprint(partido_bp, url_prefix='/api')
 app.register_blueprint(usuario_bp, url_prefix='/api')

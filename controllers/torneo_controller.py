@@ -1,6 +1,8 @@
 # controllers/torneo_controller.py
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from services.torneo_service import TorneoService
+from services.auth_service import AuthService
 from config.database import get_db_session
 
 # Crear el Blueprint para los torneos
@@ -67,13 +69,12 @@ def get_torneo(torneo_id):
 
 # Endpoint para crear un nuevo torneo
 @torneo_bp.route('/torneos', methods=['POST'])
+@jwt_required()
 def create_torneo():
     """
     POST /torneos
     Crea un nuevo torneo.
-    Headers requeridos:
-        X-User-ID: ID del usuario que crea el torneo
-        X-User-Perfil: Perfil del usuario (debe ser 'profesor' o 'administrador')
+    Requiere token JWT válido.
     Parámetros esperados (JSON):
         nombre (str): Nombre del torneo.
         superficie (str): Tipo de superficie del torneo.
@@ -84,13 +85,10 @@ def create_torneo():
         descripcion (str): Descripción del torneo (opcional).
     """
     try:
-        # Obtener información del usuario desde headers
-        usuario_id = request.headers.get('X-User-ID')
-        usuario_perfil = request.headers.get('X-User-Perfil')
+        # Obtener información del usuario desde JWT
+        claims = get_jwt()
+        usuario_perfil = claims.get('perfil')
         
-        if not usuario_id or not usuario_perfil:
-            return jsonify({'error': 'Headers X-User-ID y X-User-Perfil son requeridos'}), 400
-
         if usuario_perfil not in ['profesor', 'administrador']:
             return jsonify({'error': 'Solo profesores y administradores pueden crear torneos'}), 403
 
@@ -104,8 +102,11 @@ def create_torneo():
         if data['tipo'] not in ['abierto', 'cerrado']:
             return jsonify({'error': 'El tipo debe ser "abierto" o "cerrado"'}), 400
 
+        # Obtener ID del usuario desde JWT
+        usuario_id = get_jwt_identity()
+        
         service = TorneoService(get_db_session())
-        torneo = service.crear_torneo(data, int(usuario_id))
+        torneo = service.crear_torneo(data, usuario_id)
         return jsonify(torneo.as_dict()), 201
         
     except ValueError as e:
@@ -115,24 +116,22 @@ def create_torneo():
 
 # Endpoint para actualizar un torneo
 @torneo_bp.route('/torneos/<int:torneo_id>', methods=['PUT'])
+@jwt_required()
 def update_torneo(torneo_id):
     """
     PUT /torneos/<torneo_id>
     Actualiza un torneo existente.
-    Headers requeridos:
-        X-User-ID: ID del usuario
-        X-User-Perfil: Perfil del usuario
+    Requiere token JWT válido.
     """
     try:
-        usuario_id = request.headers.get('X-User-ID')
-        usuario_perfil = request.headers.get('X-User-Perfil')
-        
-        if not usuario_id or not usuario_perfil:
-            return jsonify({'error': 'Headers X-User-ID y X-User-Perfil son requeridos'}), 400
+        # Obtener información del usuario desde JWT
+        claims = get_jwt()
+        usuario_perfil = claims.get('perfil')
+        usuario_id = get_jwt_identity()
 
         data = request.get_json()
         service = TorneoService(get_db_session())
-        torneo = service.actualizar_torneo(torneo_id, data, int(usuario_id), usuario_perfil)
+        torneo = service.actualizar_torneo(torneo_id, data, usuario_id, usuario_perfil)
         
         if torneo:
             return jsonify(torneo.as_dict()), 200
@@ -145,23 +144,21 @@ def update_torneo(torneo_id):
 
 # Endpoint para eliminar un torneo
 @torneo_bp.route('/torneos/<int:torneo_id>', methods=['DELETE'])
+@jwt_required()
 def delete_torneo(torneo_id):
     """
     DELETE /torneos/<torneo_id>
     Elimina un torneo.
-    Headers requeridos:
-        X-User-ID: ID del usuario
-        X-User-Perfil: Perfil del usuario
+    Requiere token JWT válido.
     """
     try:
-        usuario_id = request.headers.get('X-User-ID')
-        usuario_perfil = request.headers.get('X-User-Perfil')
-        
-        if not usuario_id or not usuario_perfil:
-            return jsonify({'error': 'Headers X-User-ID y X-User-Perfil son requeridos'}), 400
+        # Obtener información del usuario desde JWT
+        claims = get_jwt()
+        usuario_perfil = claims.get('perfil')
+        usuario_id = get_jwt_identity()
 
         service = TorneoService(get_db_session())
-        resultado = service.eliminar_torneo(torneo_id, int(usuario_id), usuario_perfil)
+        resultado = service.eliminar_torneo(torneo_id, usuario_id, usuario_perfil)
         
         if resultado:
             return jsonify({'message': 'Torneo eliminado'}), 200
