@@ -1,5 +1,7 @@
 Flask
-sqlalchemy
+SQLAlchemy
 pymysql
-python-dotenv
 requests
+Flask-JWT-Extended
+bcrypt
+python-dotenv
