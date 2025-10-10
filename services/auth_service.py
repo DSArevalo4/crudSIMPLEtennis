@@ -29,6 +29,26 @@ class AuthService:
             logger.error(f"Error en autenticación: {str(e)}")
             return None
 
+    def authenticate_user_by_email(self, email, password):
+        """
+        Autentica un usuario con email y password.
+        """
+        try:
+            usuario = self.db.query(Usuario).filter(
+                Usuario.email == email,
+                Usuario.activo == True
+            ).first()
+
+            if usuario and usuario.check_password(password):
+                logger.info(f"Usuario autenticado por email: {email}")
+                return usuario
+            else:
+                logger.warning(f"Intento de login fallido para email: {email}")
+                return None
+        except Exception as e:
+            logger.error(f"Error en autenticación por email: {str(e)}")
+            return None
+
     def create_access_token(self, usuario):
         """
         Crea un token JWT para el usuario.
@@ -42,7 +62,7 @@ class AuthService:
             }
             
             access_token = create_access_token(
-                identity=usuario.id,
+                identity=str(usuario.id),
                 additional_claims=additional_claims
             )
             return access_token
@@ -57,6 +77,8 @@ class AuthService:
         try:
             user_id = get_jwt_identity()
             if user_id:
+                # Convertir string a int ya que el identity se guarda como string
+                user_id = int(user_id)
                 usuario = self.db.query(Usuario).filter(
                     Usuario.id == user_id,
                     Usuario.activo == True

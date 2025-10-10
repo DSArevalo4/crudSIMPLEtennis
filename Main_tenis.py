@@ -1,5 +1,6 @@
-from flask import Flask, render_template_string, request, jsonify, Response
-from flask_jwt_extended import JWTManager
+from flask import Flask, render_template_string, request, jsonify, Response, render_template, redirect, url_for
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
+from flask_cors import CORS
 from controllers.torneo_controller import torneo_bp
 from controllers.partido_controller import partido_bp
 from controllers.usuario_controller import usuario_bp
@@ -8,9 +9,17 @@ from controllers.cuadro_controller import cuadro_bp
 from controllers.notificacion_controller import notificacion_bp
 from controllers.auth_controller import auth_bp, register_jwt_error_handlers
 from config.jwt_config import JWT_SECRET_KEY, JWT_ACCESS_TOKEN_EXPIRES
+from config.database import get_db_session
+from models.usuario_model import Usuario
+from models.torneo_model import Torneo
+from models.partido_model import Partido
+from models.inscripcion_model import Inscripcion
 import requests
 
 app = Flask(__name__)
+
+# Configurar CORS para permitir peticiones desde cualquier origen
+CORS(app, origins=['*'], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
 
 # Configurar JWT
 app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
@@ -28,6 +37,69 @@ app.register_blueprint(usuario_bp, url_prefix='/api')
 app.register_blueprint(inscripcion_bp, url_prefix='/api')
 app.register_blueprint(cuadro_bp, url_prefix='/api')
 app.register_blueprint(notificacion_bp, url_prefix='/api')
+
+# Rutas del Dashboard
+@app.route('/')
+def index():
+    """Redirigir a login por defecto"""
+    return redirect(url_for('login'))
+
+@app.route('/login')
+def login():
+    """Página de login"""
+    return render_template('login.html')
+
+@app.route('/dashboard')
+def dashboard():
+    """Dashboard principal"""
+    return render_template('dashboard.html')
+
+@app.route('/api/dashboard/stats')
+@jwt_required()
+def dashboard_stats():
+    """API para obtener estadísticas del dashboard"""
+    try:
+        session = get_db_session()
+        
+        # Estadísticas básicas
+        total_usuarios = session.query(Usuario).filter(Usuario.activo == True).count()
+        total_torneos = session.query(Torneo).count()
+        total_partidos = session.query(Partido).count()
+        total_inscripciones = session.query(Inscripcion).count()
+        
+        # Torneos activos (en_curso)
+        torneos_activos = session.query(Torneo).filter(Torneo.estado == 'en_curso').count()
+        
+        # Inscripciones pendientes
+        inscripciones_pendientes = session.query(Inscripcion).filter(Inscripcion.estado == 'pendiente').count()
+        
+        # Estadísticas del usuario actual
+        user_id = get_jwt_identity()
+        user_torneos = session.query(Inscripcion).filter(
+            Inscripcion.deportista_id == user_id
+        ).count()
+        
+        user_partidos = session.query(Partido).filter(
+            (Partido.deportista1_id == user_id) | (Partido.deportista2_id == user_id)
+        ).count()
+        
+        stats = {
+            'activeTournaments': torneos_activos,
+            'totalMatches': total_partidos,
+            'participationRate': 75,  # Valor por defecto
+            'totalPlayers': total_usuarios,
+            'pendingInscriptions': inscripciones_pendientes,
+            'completionRate': 85,  # Valor por defecto
+            'avgMatchDuration': 45,  # Valor por defecto
+            'userTournaments': user_torneos,
+            'userMatches': user_partidos
+        }
+        
+        session.close()
+        return jsonify(stats)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 HTML = '''<!DOCTYPE html>
 <html lang="es">

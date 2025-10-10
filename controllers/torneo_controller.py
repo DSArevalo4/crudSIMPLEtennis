@@ -6,14 +6,6 @@ from services.auth_service import AuthService
 from config.database import get_db_session
 
 torneo_bp = Blueprint('torneo_bp', __name__)
-<<<<<<< HEAD
-service = TorneoService(get_db_session())
-
-@torneo_bp.route('/torneos', methods=['GET'])
-def get_torneos():
-    torneos = service.listar_torneos()
-    return jsonify([t.as_dict() for t in torneos]), 200
-=======
 
 # Endpoint para obtener todos los torneos
 @torneo_bp.route('/torneos', methods=['GET'])
@@ -57,16 +49,9 @@ def get_torneos_por_profesor(profesor_id):
         return jsonify([t.as_dict() for t in torneos]), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
->>>>>>> release/2.0.0
 
 @torneo_bp.route('/torneos/<int:torneo_id>', methods=['GET'])
 def get_torneo(torneo_id):
-<<<<<<< HEAD
-    t = service.obtener_torneo(torneo_id)
-    if t:
-        return jsonify(t.as_dict()), 200
-    return jsonify({'error': 'Torneo no encontrado'}), 404
-=======
     """
     GET /torneos/<torneo_id>
     Recupera un torneo específico por su ID.
@@ -79,20 +64,10 @@ def get_torneo(torneo_id):
         return jsonify({'error': 'Torneo no encontrado'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
->>>>>>> release/2.0.0
 
 @torneo_bp.route('/torneos', methods=['POST'])
 @jwt_required()
 def create_torneo():
-<<<<<<< HEAD
-    data = request.get_json()
-    required = ['nombre','superficie','nivel','fecha']
-    if any(not data.get(k) for k in required):
-        return jsonify({'error': 'Todos los campos son obligatorios'}), 400
-    t = service.crear_torneo(data)
-    return jsonify(t.as_dict()), 201
-
-=======
     """
     POST /torneos
     Crea un nuevo torneo.
@@ -137,17 +112,9 @@ def create_torneo():
         return jsonify({'error': str(e)}), 500
 
 # Endpoint para actualizar un torneo
->>>>>>> release/2.0.0
 @torneo_bp.route('/torneos/<int:torneo_id>', methods=['PUT'])
 @jwt_required()
 def update_torneo(torneo_id):
-<<<<<<< HEAD
-    data = request.get_json()
-    t = service.actualizar_torneo(torneo_id, data)
-    if t:
-        return jsonify(t.as_dict()), 200
-    return jsonify({'error': 'Torneo no encontrado'}), 404
-=======
     """
     PUT /torneos/<torneo_id>
     Actualiza un torneo existente.
@@ -171,17 +138,10 @@ def update_torneo(torneo_id):
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
->>>>>>> release/2.0.0
 
 @torneo_bp.route('/torneos/<int:torneo_id>', methods=['DELETE'])
 @jwt_required()
 def delete_torneo(torneo_id):
-<<<<<<< HEAD
-    ok = service.eliminar_torneo(torneo_id)
-    if ok:
-        return jsonify({'message': 'Torneo eliminado'}), 200
-    return jsonify({'error': 'Torneo no encontrado'}), 404
-=======
     """
     DELETE /torneos/<torneo_id>
     Elimina un torneo.
@@ -204,4 +164,3 @@ def delete_torneo(torneo_id):
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
->>>>>>> release/2.0.0

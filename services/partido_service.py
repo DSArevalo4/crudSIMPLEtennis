@@ -169,4 +169,3 @@ class PartidoService:
 
         self.db.commit()
         return partido
->>>>>>> release/2.0.0

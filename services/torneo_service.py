@@ -115,4 +115,3 @@ class TorneoService:
         Obtener torneos creados por un profesor específico.
         """
         return self.db.query(Torneo).filter(Torneo.profesor_id == profesor_id).all()
->>>>>>> release/2.0.0

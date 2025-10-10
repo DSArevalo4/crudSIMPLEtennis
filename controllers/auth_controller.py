@@ -32,30 +32,30 @@ def login():
     POST /auth/login
     Autentica a un usuario y retorna un token JWT.
     Parámetros esperados (JSON):
-        username (str): Nombre de usuario.
+        email (str): Email del usuario.
         password (str): Contraseña del usuario.
     Respuesta: JSON con el token JWT y datos del usuario.
     """
     try:
         data = request.get_json()
-        username = data.get('username')
+        email = data.get('email')
         password = data.get('password')
 
-        if not username or not password:
-            logger.warning("Login fallido: usuario o contraseña no proporcionados")
+        if not email or not password:
+            logger.warning("Login fallido: email o contraseña no proporcionados")
             return jsonify({
-                'error': 'El nombre de usuario y la contraseña son obligatorios'
+                'error': 'El email y la contraseña son obligatorios'
             }), 400
 
         service = AuthService(get_db_session())
-        usuario = service.authenticate_user(username, password)
+        usuario = service.authenticate_user_by_email(email, password)
 
         if usuario:
             access_token = service.create_access_token(usuario)
             if access_token:
-                logger.info(f"Usuario autenticado exitosamente: {username}")
+                logger.info(f"Usuario autenticado exitosamente: {email}")
                 return jsonify({
-                    'access_token': access_token,
+                    'token': access_token,
                     'user': usuario.as_dict(),
                     'message': 'Login exitoso'
                 }), 200
@@ -64,7 +64,7 @@ def login():
                     'error': 'Error generando token de acceso'
                 }), 500
         else:
-            logger.warning(f"Login fallido para usuario: {username}")
+            logger.warning(f"Login fallido para email: {email}")
             return jsonify({
                 'error': 'Credenciales inválidas'
             }), 401
@@ -79,7 +79,7 @@ def login():
 def register():
     """
     POST /auth/register
-    Registra un nuevo usuario.
+    Registra un nuevo usuario deportista.
     Parámetros esperados (JSON):
         username (str): Nombre de usuario único.
         password (str): Contraseña del usuario.
@@ -87,11 +87,10 @@ def register():
         apellido (str): Apellido del usuario.
         email (str): Email único del usuario.
         telefono (str): Teléfono del usuario (opcional).
-        perfil (str): 'deportista', 'profesor', 'administrador'.
     """
     try:
         data = request.get_json()
-        required_fields = ['username', 'password', 'nombre', 'apellido', 'email', 'perfil']
+        required_fields = ['username', 'password', 'nombre', 'apellido', 'email']
         
         for field in required_fields:
             if not data.get(field):
@@ -99,18 +98,16 @@ def register():
                     'error': f'El campo {field} es obligatorio'
                 }), 400
 
-        if data['perfil'] not in ['deportista', 'profesor', 'administrador']:
-            return jsonify({
-                'error': 'El perfil debe ser deportista, profesor o administrador'
-            }), 400
+        # Solo permitir registro de deportistas
+        data['perfil'] = 'deportista'
 
         service = AuthService(get_db_session())
         usuario = service.register_user(data)
 
-        logger.info(f"Usuario registrado exitosamente: {usuario.username}")
+        logger.info(f"Usuario deportista registrado exitosamente: {usuario.username}")
         return jsonify({
             'user': usuario.as_dict(),
-            'message': 'Usuario registrado exitosamente'
+            'message': 'Usuario deportista registrado exitosamente'
         }), 201
 
     except ValueError as e:
