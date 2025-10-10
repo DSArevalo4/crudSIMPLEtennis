@@ -42,13 +42,24 @@ class UsuarioService:
         if data['perfil'] not in ['deportista', 'profesor', 'administrador']:
             raise ValueError("Perfil de usuario inválido")
 
+        # Validar que el username no existe
+        if 'username' in data and data['username']:
+            existing_user = self.db.query(Usuario).filter(Usuario.username == data['username']).first()
+            if existing_user:
+                raise ValueError("Ya existe un usuario con este username")
+
         usuario = Usuario(
             nombre=data['nombre'],
             apellido=data['apellido'],
             email=data['email'],
             telefono=data.get('telefono'),
+            username=data.get('username'),
             perfil=data['perfil']
         )
+
+        # Establecer contraseña si se proporciona
+        if 'password' in data and data['password']:
+            usuario.set_password(data['password'])
 
         self.db.add(usuario)
         self.db.commit()
@@ -78,7 +89,11 @@ class UsuarioService:
         if 'telefono' in data:
             usuario.telefono = data['telefono']
         
-        # Solo administradores pueden cambiar email y perfil
+        # Actualizar contraseña si se proporciona
+        if 'password' in data and data['password']:
+            usuario.set_password(data['password'])
+        
+        # Solo administradores pueden cambiar email, username y perfil
         if usuario_actualizador_perfil == 'administrador':
             if 'email' in data:
                 # Verificar que el nuevo email no existe
@@ -86,6 +101,14 @@ class UsuarioService:
                     if self.obtener_usuario_por_email(data['email']):
                         raise ValueError("Ya existe un usuario con este email")
                     usuario.email = data['email']
+            
+            if 'username' in data:
+                # Verificar que el nuevo username no existe
+                if data['username'] != usuario.username:
+                    existing_user = self.db.query(Usuario).filter(Usuario.username == data['username']).first()
+                    if existing_user:
+                        raise ValueError("Ya existe un usuario con este username")
+                    usuario.username = data['username']
             
             if 'perfil' in data:
                 if data['perfil'] not in ['deportista', 'profesor', 'administrador']:

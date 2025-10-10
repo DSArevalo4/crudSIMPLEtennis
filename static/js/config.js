@@ -9,7 +9,7 @@ const CONFIG = {
     REGISTER: "/api/auth/register",
     TORNEOS: "/api/torneo",
     PARTIDOS: "/api/partido",
-    USUARIOS: "/api/usuario",
+    USUARIOS: "/api/usuarios",
     INSCRIPCIONES: "/api/inscripcion",
     CUADRO: "/api/cuadro",
     NOTIFICACIONES: "/api/notificacion",

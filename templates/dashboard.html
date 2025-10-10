@@ -62,7 +62,7 @@
                     </svg>
                     <span>Inscripciones</span>
                 </a>
-                <a href="/usuarios" class="nav-item">
+                <a href="#" class="nav-item" onclick="openUsuariosModal(); return false;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
@@ -262,6 +262,92 @@
         </main>
     </div>
 
+    <!-- Modal de Gestión de Usuarios -->
+    <div id="usuariosModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Gestión de Usuarios</h2>
+                <button class="close-btn" onclick="closeUsuariosModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Botón para crear nuevo usuario -->
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="openCreateUsuarioForm()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Nuevo Usuario
+                    </button>
+                </div>
+
+                <!-- Lista de usuarios -->
+                <div class="usuarios-list" id="usuariosList">
+                    <div class="loading">Cargando usuarios...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Formulario de Usuario -->
+    <div id="usuarioFormModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="usuarioFormTitle">Crear Usuario</h2>
+                <button class="close-btn" onclick="closeUsuarioFormModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="usuarioForm">
+                    <div class="form-group">
+                        <label for="usuarioNombre">Nombre *</label>
+                        <input type="text" id="usuarioNombre" name="nombre" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="usuarioApellido">Apellido *</label>
+                        <input type="text" id="usuarioApellido" name="apellido" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="usuarioEmail">Email *</label>
+                        <input type="email" id="usuarioEmail" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="usuarioTelefono">Teléfono</label>
+                        <input type="tel" id="usuarioTelefono" name="telefono">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="usuarioUsername">Username *</label>
+                        <input type="text" id="usuarioUsername" name="username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="usuarioPassword">Contraseña *</label>
+                        <input type="password" id="usuarioPassword" name="password" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="usuarioPerfil">Perfil *</label>
+                        <select id="usuarioPerfil" name="perfil" required>
+                            <option value="deportista">Deportista</option>
+                            <option value="profesor">Profesor</option>
+                            <option value="administrador">Administrador</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeUsuarioFormModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="usuarioSubmitBtn">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='js/config.js') }}"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
@@ -281,6 +367,168 @@
                 document.getElementById('userName').textContent = `${user.nombre} ${user.apellido}`;
                 document.getElementById('userEmail').textContent = user.email;
                 document.getElementById('userRole').textContent = user.perfil;
+            }
+        });
+
+        // Variables globales para gestión de usuarios
+        let currentEditingUserId = null;
+
+        // Funciones para manejar el modal de usuarios
+        function openUsuariosModal() {
+            document.getElementById('usuariosModal').style.display = 'flex';
+            loadUsuarios();
+        }
+
+        function closeUsuariosModal() {
+            document.getElementById('usuariosModal').style.display = 'none';
+        }
+
+        function openCreateUsuarioForm() {
+            currentEditingUserId = null;
+            document.getElementById('usuarioFormTitle').textContent = 'Crear Usuario';
+            document.getElementById('usuarioForm').reset();
+            document.getElementById('usuarioPassword').required = true;
+            document.getElementById('usuarioFormModal').style.display = 'flex';
+        }
+
+        function closeUsuarioFormModal() {
+            document.getElementById('usuarioFormModal').style.display = 'none';
+            currentEditingUserId = null;
+        }
+
+        function openEditUsuarioForm(usuario) {
+            currentEditingUserId = usuario.id;
+            document.getElementById('usuarioFormTitle').textContent = 'Editar Usuario';
+            
+            // Llenar el formulario con los datos del usuario
+            document.getElementById('usuarioNombre').value = usuario.nombre;
+            document.getElementById('usuarioApellido').value = usuario.apellido;
+            document.getElementById('usuarioEmail').value = usuario.email;
+            document.getElementById('usuarioTelefono').value = usuario.telefono || '';
+            document.getElementById('usuarioUsername').value = usuario.username;
+            document.getElementById('usuarioPerfil').value = usuario.perfil;
+            
+            // La contraseña no es requerida para edición
+            document.getElementById('usuarioPassword').required = false;
+            document.getElementById('usuarioPassword').placeholder = 'Dejar vacío para mantener la contraseña actual';
+            
+            document.getElementById('usuarioFormModal').style.display = 'flex';
+        }
+
+        // Cargar lista de usuarios
+        async function loadUsuarios() {
+            const usuariosList = document.getElementById('usuariosList');
+            usuariosList.innerHTML = '<div class="loading">Cargando usuarios...</div>';
+            
+            try {
+                const usuarios = await api.getUsuarios();
+                renderUsuarios(usuarios);
+            } catch (error) {
+                usuariosList.innerHTML = `<div class="error">Error al cargar usuarios: ${error.message}</div>`;
+            }
+        }
+
+        // Renderizar lista de usuarios
+        function renderUsuarios(usuarios) {
+            const usuariosList = document.getElementById('usuariosList');
+            
+            if (usuarios.length === 0) {
+                usuariosList.innerHTML = '<div class="loading">No hay usuarios registrados</div>';
+                return;
+            }
+
+            usuariosList.innerHTML = usuarios.map(usuario => `
+                <div class="usuario-item">
+                    <div class="usuario-info">
+                        <div class="usuario-name">${usuario.nombre} ${usuario.apellido}</div>
+                        <div class="usuario-details">
+                            <strong>Email:</strong> ${usuario.email} | 
+                            <strong>Username:</strong> ${usuario.username} | 
+                            <strong>Perfil:</strong> ${usuario.perfil} | 
+                            <strong>Estado:</strong> ${usuario.activo ? 'Activo' : 'Inactivo'}
+                        </div>
+                    </div>
+                    <div class="usuario-actions">
+                        <button class="btn-icon btn-edit" onclick="openEditUsuarioForm(${JSON.stringify(usuario).replace(/"/g, '&quot;')})" title="Editar">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                        <button class="btn-icon btn-delete" onclick="deleteUsuario(${usuario.id})" title="Eliminar">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3,6 5,6 21,6"></polyline>
+                                <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Eliminar usuario
+        async function deleteUsuario(usuarioId) {
+            if (!confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+                return;
+            }
+
+            try {
+                await api.deleteUsuario(usuarioId);
+                loadUsuarios(); // Recargar la lista
+                alert('Usuario eliminado exitosamente');
+            } catch (error) {
+                alert(`Error al eliminar usuario: ${error.message}`);
+            }
+        }
+
+        // Manejar envío del formulario de usuario
+        document.getElementById('usuarioForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const usuarioData = {
+                nombre: formData.get('nombre'),
+                apellido: formData.get('apellido'),
+                email: formData.get('email'),
+                telefono: formData.get('telefono'),
+                username: formData.get('username'),
+                perfil: formData.get('perfil')
+            };
+
+            // Solo incluir contraseña si se proporcionó
+            const password = formData.get('password');
+            if (password && password.trim() !== '') {
+                usuarioData.password = password;
+            }
+
+            try {
+                if (currentEditingUserId) {
+                    // Actualizar usuario existente
+                    await api.updateUsuario(currentEditingUserId, usuarioData);
+                    alert('Usuario actualizado exitosamente');
+                } else {
+                    // Crear nuevo usuario
+                    await api.createUsuario(usuarioData);
+                    alert('Usuario creado exitosamente');
+                }
+                
+                closeUsuarioFormModal();
+                loadUsuarios(); // Recargar la lista
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        // Cerrar modales al hacer clic fuera de ellos
+        window.addEventListener('click', function(e) {
+            const usuariosModal = document.getElementById('usuariosModal');
+            const usuarioFormModal = document.getElementById('usuarioFormModal');
+            
+            if (e.target === usuariosModal) {
+                closeUsuariosModal();
+            }
+            if (e.target === usuarioFormModal) {
+                closeUsuarioFormModal();
             }
         });
     </script>

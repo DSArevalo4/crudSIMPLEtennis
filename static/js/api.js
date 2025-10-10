@@ -7,11 +7,14 @@ class ApiService {
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`
     const token = auth.getToken()
+    const user = auth.getUser()
     
     const defaultOptions = {
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+        ...(user && { 'X-User-ID': user.id.toString() }),
+        ...(user && { 'X-User-Perfil': user.perfil })
       }
     }
 
@@ -88,6 +91,19 @@ class ApiService {
     return this.request(CONFIG.ENDPOINTS.USUARIOS, {
       method: 'POST',
       body: JSON.stringify(usuarioData)
+    })
+  }
+
+  async updateUsuario(id, usuarioData) {
+    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(usuarioData)
+    })
+  }
+
+  async deleteUsuario(id) {
+    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}`, {
+      method: 'DELETE'
     })
   }
 
