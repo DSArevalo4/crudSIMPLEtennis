@@ -17,14 +17,26 @@ def register_jwt_error_handlers(app):
     def handle_no_auth_error(e):
         logger.warning("Intento de acceso sin autenticación JWT")
         return jsonify({
-            'error': 'No autenticado. Debe enviar un token JWT válido en el header Authorization.'
+            'error': 'No autenticado. Debe enviar un token JWT válido en el header Authorization.',
+            'code': 'NO_AUTH_TOKEN',
+            'redirect': '/login'
         }), 401
 
     @app.errorhandler(401)
     def handle_unauthorized(e):
         return jsonify({
-            'error': 'Token JWT inválido o expirado'
+            'error': 'Token JWT inválido o expirado',
+            'code': 'INVALID_TOKEN',
+            'redirect': '/login'
         }), 401
+
+    @app.errorhandler(422)
+    def handle_unprocessable_entity(e):
+        return jsonify({
+            'error': 'Token JWT malformado',
+            'code': 'MALFORMED_TOKEN',
+            'redirect': '/login'
+        }), 422
 
 @auth_bp.route('/auth/login', methods=['POST'])
 def login():

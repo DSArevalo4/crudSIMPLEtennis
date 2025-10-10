@@ -77,10 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
           auth.setAuth(response.token, response.user)
           showSuccess('Inicio de sesión exitoso')
           
-          // Redirect to dashboard after short delay
-          setTimeout(() => {
-            window.location.href = '/dashboard'
-          }, 1000)
+          // La redirección se maneja automáticamente en setAuth
         } else {
           showError('Credenciales inválidas')
         }

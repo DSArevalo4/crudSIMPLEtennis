@@ -59,27 +59,35 @@ class ApiService {
 
   // Tournament endpoints
   async getTorneos() {
-    return this.request(CONFIG.ENDPOINTS.TORNEOS)
+    return this.request('/api/torneos')
+  }
+
+  async getTorneo(id) {
+    return this.request(`/api/torneos/${id}`)
   }
 
   async createTorneo(torneoData) {
-    return this.request(CONFIG.ENDPOINTS.TORNEOS, {
+    return this.request('/api/torneos', {
       method: 'POST',
       body: JSON.stringify(torneoData)
     })
   }
 
   async updateTorneo(id, torneoData) {
-    return this.request(`${CONFIG.ENDPOINTS.TORNEOS}/${id}`, {
+    return this.request(`/api/torneos/${id}`, {
       method: 'PUT',
       body: JSON.stringify(torneoData)
     })
   }
 
   async deleteTorneo(id) {
-    return this.request(`${CONFIG.ENDPOINTS.TORNEOS}/${id}`, {
+    return this.request(`/api/torneos/${id}`, {
       method: 'DELETE'
     })
+  }
+
+  async getInscripcionesByTorneo(torneoId) {
+    return this.request(`/api/torneos/${torneoId}/inscripciones`)
   }
 
   // User endpoints

@@ -1034,3 +1034,244 @@ body {
   padding: var(--spacing-xl);
   color: var(--color-text-secondary);
 }
+
+/* Torneos Styles */
+.torneos-container {
+  padding: 2rem 0;
+}
+
+.torneos-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.torneo-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.torneo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.torneo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.torneo-nombre {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.torneo-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-pendiente {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.badge-en_curso {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-finalizado {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badge-nivel {
+  background-color: #f3e8ff;
+  color: #7c3aed;
+}
+
+.torneo-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.torneo-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+/* Tennis Bracket Styles */
+.tennis-bracket {
+  display: flex;
+  gap: 2rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+}
+
+.bracket-round {
+  min-width: 200px;
+  flex-shrink: 0;
+}
+
+.round-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+  text-align: center;
+  padding: 0.5rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.round-matches {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.match-slot {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.match-slot.first-round {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.match-slot.final {
+  border-color: #f59e0b;
+  background-color: #fffbeb;
+  border-width: 3px;
+}
+
+.player-slot {
+  text-align: center;
+}
+
+.player-name {
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0.25rem 0;
+}
+
+.vs {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin: 0.25rem 0;
+}
+
+.bye {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+  margin: 0.25rem 0;
+}
+
+.empty-slot {
+  color: #9ca3af;
+  font-style: italic;
+  text-align: center;
+}
+
+.match-connector {
+  position: absolute;
+  right: -1rem;
+  top: 50%;
+  width: 1rem;
+  height: 2px;
+  background-color: #3b82f6;
+  transform: translateY(-50%);
+}
+
+.match-connector::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: -3px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid #3b82f6;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+}
+
+.empty-bracket {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  padding: 2rem;
+}
+
+/* Modal Styles */
+.large-modal .modal-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.tennis-bracket-container {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.empty-state {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  padding: 2rem;
+}
+
+.error {
+  text-align: center;
+  color: #ef4444;
+  padding: 1rem;
+  background-color: #fef2f2;
+  border-radius: 8px;
+  margin: 1rem 0;
+}

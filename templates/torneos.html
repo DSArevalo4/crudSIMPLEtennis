@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torneos - Sistema de Torneos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/config.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/url-manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+</head>
+<body>
+    <script>
+        // Verificar autenticación antes de mostrar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Limpiar URL inmediatamente para evitar parpadeo
+            if (window.location.pathname === '/torneos') {
+                history.replaceState(null, null, '/');
+            }
+            
+            // Verificar autenticación de forma silenciosa primero
+            if (!auth.isAuthenticatedSilent()) {
+                // Solo redirigir si realmente no hay token válido
+                history.replaceState(null, null, '/');
+                window.location.href = '/login';
+                return;
+            }
+
+            // Configurar protección adicional solo si está autenticado
+            setupSecurityProtection();
+            
+            // Cargar torneos
+            loadTorneos();
+        });
+
+        function setupSecurityProtection() {
+            // Prevenir acceso directo a URLs protegidas
+            window.addEventListener('beforeunload', function() {
+                // No limpiar aquí para mantener la sesión
+            });
+
+            // Detectar intentos de navegación hacia atrás
+            window.addEventListener('popstate', function(event) {
+                if (auth.isAuthenticated()) {
+                    // Prevenir navegación hacia atrás
+                    history.pushState(null, null, '/');
+                }
+            });
+
+            // Verificar autenticación periódicamente
+            setInterval(function() {
+                if (!auth.isAuthenticated()) {
+                    auth.redirectToLogin();
+                }
+            }, 30000); // Cada 30 segundos
+
+            // Detectar cambios de visibilidad de la pestaña
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden && !auth.isAuthenticated()) {
+                    auth.redirectToLogin();
+                }
+            });
+        }
+    </script>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="2"/>
+                        <path d="M20 8 L20 32 M8 20 L32 20" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span>Tenis.com</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard" class="nav-item" onclick="navigateToDashboard(event)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/torneos" class="nav-item active">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                    <span>Torneos</span>
+                </a>
+                <a href="/partidos" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                    <span>Partidos</span>
+                </a>
+                <a href="/inscripciones" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="8.5" cy="7" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/>
+                        <line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                    <span>Inscripciones</span>
+                </a>
+                <a href="#" class="nav-item" onclick="openUsuariosModal(); return false;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>Usuarios</span>
+                </a>
+                <a href="/notificaciones" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <span>Notificaciones</span>
+                    <span class="badge" id="notificationBadge">0</span>
+                </a>
+                <a href="#" class="nav-item" id="logoutBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </nav>
+
+            <!-- User Profile Card -->
+            <div class="user-profile-card">
+                <div class="user-avatar">
+                    <img id="userAvatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=default" alt="User">
+                </div>
+                <div class="user-info">
+                    <h3 id="userName">Cargando...</h3>
+                    <p id="userEmail">...</p>
+                </div>
+                <div class="user-badge" id="userBadge">
+                    <span>Deportista</span>
+                </div>
+                <div class="user-stats">
+                    <div class="stat">
+                        <span class="stat-value" id="userTournaments">0</span>
+                        <span class="stat-label">Torneos</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="userMatches">0</span>
+                        <span class="stat-label">Partidos</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div class="header-left">
+                    <h1>Torneos</h1>
+                    <p class="subtitle">Gestión de Torneos de Tenis</p>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" onclick="openTorneoForm()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Nuevo Torneo
+                    </button>
+                </div>
+            </header>
+
+            <!-- Torneos List -->
+            <div class="torneos-container">
+                <div class="torneos-list" id="torneosList">
+                    <div class="loading">Cargando torneos...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Formulario de Torneo -->
+    <div id="torneoFormModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="torneoFormTitle">Crear Torneo</h2>
+                <button class="close-btn" onclick="closeTorneoFormModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="torneoForm">
+                    <div class="form-group">
+                        <label for="torneoNombre">Nombre del Torneo *</label>
+                        <input type="text" id="torneoNombre" name="nombre" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="torneoSuperficie">Superficie *</label>
+                        <select id="torneoSuperficie" name="superficie" required>
+                            <option value="">Seleccionar superficie</option>
+                            <option value="Arcilla">Arcilla</option>
+                            <option value="Césped">Césped</option>
+                            <option value="Dura">Dura</option>
+                            <option value="Sintética">Sintética</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="torneoNivel">Nivel *</label>
+                        <select id="torneoNivel" name="nivel" required>
+                            <option value="">Seleccionar nivel</option>
+                            <option value="Principiante">Principiante</option>
+                            <option value="Intermedio">Intermedio</option>
+                            <option value="Avanzado">Avanzado</option>
+                            <option value="Profesional">Profesional</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="torneoFecha">Fecha del Torneo *</label>
+                        <input type="date" id="torneoFecha" name="fecha" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="torneoHora">Hora de Inicio</label>
+                        <input type="time" id="torneoHora" name="hora">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="torneoDescripcion">Descripción</label>
+                        <textarea id="torneoDescripcion" name="descripcion" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeTorneoFormModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="torneoSubmitBtn">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Cuadro de Tenis -->
+    <div id="tennisBracketModal" class="modal" style="display: none;">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2 id="bracketTitle">Cuadro de Tenis</h2>
+                <button class="close-btn" onclick="closeTennisBracketModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="tennis-bracket-container" id="tennisBracketContainer">
+                    <!-- El cuadro de tenis se generará aquí dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/config.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/torneos.js') }}"></script>
+    
+    <script>
+        // Manejar logout
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            auth.logout();
+        });
+        
+        // Cargar información del usuario
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = auth.getUser();
+            if (user) {
+                document.getElementById('userName').textContent = `${user.nombre} ${user.apellido}`;
+                document.getElementById('userEmail').textContent = user.email;
+                document.getElementById('userBadge').textContent = user.perfil;
+            }
+        });
+
+        // Función para navegar al dashboard
+        function navigateToDashboard(event) {
+            event.preventDefault();
+            // Limpiar URL y navegar
+            history.replaceState(null, null, '/');
+            window.location.href = '/dashboard';
+        }
+    </script>
+</body>
+</html>

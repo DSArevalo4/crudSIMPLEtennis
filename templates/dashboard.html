@@ -7,13 +7,60 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{{ url_for('static', filename='js/config.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/url-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 </head>
 <body>
     <script>
         // Verificar autenticación antes de mostrar el dashboard
-        if (!auth.isAuthenticated()) {
-            window.location.href = '/login';
+        document.addEventListener('DOMContentLoaded', function() {
+            // Limpiar URL inmediatamente para evitar parpadeo
+            if (window.location.pathname === '/dashboard') {
+                history.replaceState(null, null, '/');
+            }
+            
+            // Verificar autenticación de forma silenciosa primero
+            if (!auth.isAuthenticatedSilent()) {
+                // Solo redirigir si realmente no hay token válido
+                history.replaceState(null, null, '/');
+                window.location.href = '/login';
+                return;
+            }
+
+            // Configurar protección adicional solo si está autenticado
+            setupSecurityProtection();
+        });
+
+        function setupSecurityProtection() {
+            // Prevenir acceso directo a URLs protegidas
+            window.addEventListener('beforeunload', function() {
+                // Limpiar datos sensibles al salir
+                if (event.type === 'beforeunload') {
+                    // No limpiar aquí para mantener la sesión
+                }
+            });
+
+            // Detectar intentos de navegación hacia atrás
+            window.addEventListener('popstate', function(event) {
+                if (auth.isAuthenticated()) {
+                    // Prevenir navegación hacia atrás
+                    history.pushState(null, null, location.href);
+                }
+            });
+
+            // Verificar autenticación periódicamente
+            setInterval(function() {
+                if (!auth.isAuthenticated()) {
+                    auth.redirectToLogin();
+                }
+            }, 30000); // Cada 30 segundos
+
+            // Detectar cambios de visibilidad de la pestaña
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden && !auth.isAuthenticated()) {
+                    auth.redirectToLogin();
+                }
+            });
         }
     </script>
     <div class="app-container">
@@ -39,7 +86,7 @@
                     </svg>
                     <span>Dashboard</span>
                 </a>
-                <a href="/torneos" class="nav-item">
+                <a href="/torneos" class="nav-item" onclick="navigateToTorneos(event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                         <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -101,7 +148,6 @@
                 <div class="user-badge" id="userBadge">
                     <span>Deportista</span>
                 </div>
-                <button class="btn-upgrade">Actualizar Plan</button>
                 <div class="user-stats">
                     <div class="stat">
                         <span class="stat-value" id="userTournaments">0</span>
@@ -531,6 +577,14 @@
                 closeUsuarioFormModal();
             }
         });
+
+        // Función para navegar a torneos
+        function navigateToTorneos(event) {
+            event.preventDefault();
+            // Limpiar URL y navegar
+            history.replaceState(null, null, '/');
+            window.location.href = '/torneos';
+        }
     </script>
 </body>
 </html>

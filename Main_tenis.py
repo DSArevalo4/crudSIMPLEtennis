@@ -8,7 +8,9 @@ from controllers.inscripcion_controller import inscripcion_bp
 from controllers.cuadro_controller import cuadro_bp
 from controllers.notificacion_controller import notificacion_bp
 from controllers.auth_controller import auth_bp, register_jwt_error_handlers
+from middleware.auth_middleware import require_auth, require_admin, require_profesor_or_admin
 from config.jwt_config import JWT_SECRET_KEY, JWT_ACCESS_TOKEN_EXPIRES
+from config.security_config import get_security_config, get_cors_config
 from config.database import get_db_session
 from models.usuario_model import Usuario
 from models.torneo_model import Torneo
@@ -18,8 +20,13 @@ import requests
 
 app = Flask(__name__)
 
-# Configurar CORS para permitir peticiones desde cualquier origen
-CORS(app, origins=['*'], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
+# Configurar CORS con configuración de seguridad
+cors_config = get_cors_config()
+CORS(app, 
+     origins=cors_config['origins'], 
+     methods=cors_config['methods'], 
+     allow_headers=cors_config['allow_headers'],
+     supports_credentials=cors_config['supports_credentials'])
 
 # Configurar JWT
 app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
@@ -28,6 +35,15 @@ jwt = JWTManager(app)
 
 # Registrar manejadores de errores JWT
 register_jwt_error_handlers(app)
+
+# Configurar headers de seguridad
+@app.after_request
+def set_security_headers(response):
+    """Agregar headers de seguridad a todas las respuestas."""
+    security_config = get_security_config()
+    for header, value in security_config['SECURITY_HEADERS'].items():
+        response.headers[header] = value
+    return response
 
 # Registrar todos los blueprints
 app.register_blueprint(auth_bp, url_prefix='/api')
@@ -41,8 +57,8 @@ app.register_blueprint(notificacion_bp, url_prefix='/api')
 # Rutas del Dashboard
 @app.route('/')
 def index():
-    """Redirigir a login por defecto"""
-    return redirect(url_for('login'))
+    """Página principal - mostrar dashboard por defecto"""
+    return render_template('dashboard.html')
 
 @app.route('/login')
 def login():
@@ -54,8 +70,13 @@ def dashboard():
     """Dashboard principal"""
     return render_template('dashboard.html')
 
+@app.route('/torneos')
+def torneos():
+    """Página de torneos"""
+    return render_template('torneos.html')
+
 @app.route('/api/dashboard/stats')
-@jwt_required()
+@require_auth
 def dashboard_stats():
     """API para obtener estadísticas del dashboard"""
     try:
@@ -97,6 +118,185 @@ def dashboard_stats():
         
         session.close()
         return jsonify(stats)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API endpoints para torneos
+@app.route('/api/torneos', methods=['GET'])
+@require_auth
+def get_torneos():
+    """Obtener lista de torneos"""
+    try:
+        session = get_db_session()
+        torneos = session.query(Torneo).all()
+        
+        torneos_data = []
+        for torneo in torneos:
+            # Contar inscripciones
+            inscripciones_count = session.query(Inscripcion).filter(
+                Inscripcion.torneo_id == torneo.id
+            ).count()
+            
+            torneo_dict = torneo.as_dict()
+            torneo_dict['inscripciones_count'] = inscripciones_count
+            torneos_data.append(torneo_dict)
+        
+        session.close()
+        return jsonify(torneos_data)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/torneos/<int:torneo_id>', methods=['GET'])
+@require_auth
+def get_torneo(torneo_id):
+    """Obtener un torneo específico"""
+    try:
+        session = get_db_session()
+        torneo = session.query(Torneo).filter(Torneo.id == torneo_id).first()
+        
+        if not torneo:
+            return jsonify({'error': 'Torneo no encontrado'}), 404
+        
+        torneo_dict = torneo.as_dict()
+        session.close()
+        return jsonify(torneo_dict)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/torneos', methods=['POST'])
+@require_auth
+def create_torneo():
+    """Crear nuevo torneo"""
+    try:
+        data = request.get_json()
+        
+        # Validar campos requeridos
+        required_fields = ['nombre', 'superficie', 'nivel', 'fecha']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'El campo {field} es obligatorio'}), 400
+        
+        session = get_db_session()
+        
+        # Crear nuevo torneo
+        torneo = Torneo(
+            nombre=data['nombre'],
+            superficie=data['superficie'],
+            nivel=data['nivel'],
+            fecha=data['fecha'],
+            hora=data.get('hora'),
+            descripcion=data.get('descripcion'),
+            estado='pendiente'
+        )
+        
+        session.add(torneo)
+        session.commit()
+        session.refresh(torneo)
+        
+        torneo_dict = torneo.as_dict()
+        session.close()
+        
+        return jsonify(torneo_dict), 201
+        
+    except Exception as e:
+        session.rollback()
+        session.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/torneos/<int:torneo_id>', methods=['PUT'])
+@require_auth
+def update_torneo(torneo_id):
+    """Actualizar torneo"""
+    try:
+        data = request.get_json()
+        session = get_db_session()
+        
+        torneo = session.query(Torneo).filter(Torneo.id == torneo_id).first()
+        if not torneo:
+            return jsonify({'error': 'Torneo no encontrado'}), 404
+        
+        # Actualizar campos
+        if 'nombre' in data:
+            torneo.nombre = data['nombre']
+        if 'superficie' in data:
+            torneo.superficie = data['superficie']
+        if 'nivel' in data:
+            torneo.nivel = data['nivel']
+        if 'fecha' in data:
+            torneo.fecha = data['fecha']
+        if 'hora' in data:
+            torneo.hora = data['hora']
+        if 'descripcion' in data:
+            torneo.descripcion = data['descripcion']
+        if 'estado' in data:
+            torneo.estado = data['estado']
+        
+        session.commit()
+        torneo_dict = torneo.as_dict()
+        session.close()
+        
+        return jsonify(torneo_dict)
+        
+    except Exception as e:
+        session.rollback()
+        session.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/torneos/<int:torneo_id>', methods=['DELETE'])
+@require_auth
+def delete_torneo(torneo_id):
+    """Eliminar torneo"""
+    try:
+        session = get_db_session()
+        
+        torneo = session.query(Torneo).filter(Torneo.id == torneo_id).first()
+        if not torneo:
+            return jsonify({'error': 'Torneo no encontrado'}), 404
+        
+        # Eliminar inscripciones relacionadas
+        session.query(Inscripcion).filter(Inscripcion.torneo_id == torneo_id).delete()
+        
+        # Eliminar torneo
+        session.delete(torneo)
+        session.commit()
+        session.close()
+        
+        return jsonify({'message': 'Torneo eliminado exitosamente'})
+        
+    except Exception as e:
+        session.rollback()
+        session.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/torneos/<int:torneo_id>/inscripciones', methods=['GET'])
+@require_auth
+def get_inscripciones_by_torneo(torneo_id):
+    """Obtener inscripciones de un torneo específico"""
+    try:
+        session = get_db_session()
+        
+        # Verificar que el torneo existe
+        torneo = session.query(Torneo).filter(Torneo.id == torneo_id).first()
+        if not torneo:
+            return jsonify({'error': 'Torneo no encontrado'}), 404
+        
+        # Obtener inscripciones con información del deportista
+        inscripciones = session.query(Inscripcion, Usuario).join(
+            Usuario, Inscripcion.deportista_id == Usuario.id
+        ).filter(Inscripcion.torneo_id == torneo_id).all()
+        
+        inscripciones_data = []
+        for inscripcion, usuario in inscripciones:
+            inscripcion_dict = inscripcion.as_dict()
+            inscripcion_dict['deportista_nombre'] = f"{usuario.nombre} {usuario.apellido}"
+            inscripcion_dict['deportista_email'] = usuario.email
+            inscripciones_data.append(inscripcion_dict)
+        
+        session.close()
+        return jsonify(inscripciones_data)
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
