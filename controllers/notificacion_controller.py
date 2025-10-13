@@ -1,9 +1,13 @@
 # controllers/notificacion_controller.py
 from flask import Blueprint, request, jsonify
-from services.notificacion_service import NotificacionService
+from flask_jwt_extended import get_jwt_identity
 from config.database import get_db_session
+from middleware.auth_middleware import require_auth  # Corregido
+from models.notificacion_model import Notificacion
+from models.usuario_model import Usuario
+import traceback
 
-notificacion_bp = Blueprint('notificacion_bp', __name__)
+notificacion_bp = Blueprint('notificacion', __name__)
 
 @notificacion_bp.route('/deportistas/<int:deportista_id>/notificaciones', methods=['GET'])
 def obtener_notificaciones_deportista(deportista_id):

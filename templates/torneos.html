@@ -78,7 +78,7 @@
             </div>
 
             <nav class="sidebar-nav">
-                <a href="/dashboard" class="nav-item" onclick="navigateToDashboard(event)">
+                <a href="#" class="nav-item" onclick="navigateTo(event, '/dashboard')">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7"/>
                         <rect x="14" y="3" width="7" height="7"/>
@@ -87,21 +87,21 @@
                     </svg>
                     <span>Dashboard</span>
                 </a>
-                <a href="/torneos" class="nav-item active">
+                <a href="#" class="nav-item active" onclick="navigateTo(event, '/torneos')">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                         <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
                     </svg>
                     <span>Torneos</span>
                 </a>
-                <a href="/partidos" class="nav-item">
+                <a href="#" class="nav-item" onclick="navigateTo(event, '/partidos')">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"/>
                         <path d="M12 6v6l4 2"/>
                     </svg>
                     <span>Partidos</span>
                 </a>
-                <a href="/inscripciones" class="nav-item">
+                <a href="#" class="nav-item" onclick="navigateTo(event, '/inscripciones')">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="8.5" cy="7" r="4"/>
@@ -119,7 +119,7 @@
                     </svg>
                     <span>Usuarios</span>
                 </a>
-                <a href="/notificaciones" class="nav-item">
+                <a href="#" class="nav-item" onclick="navigateTo(event, '/notificaciones')">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                         <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
@@ -227,6 +227,15 @@
                     </div>
                     
                     <div class="form-group">
+                        <label for="torneoTipo">Tipo de Torneo *</label>
+                        <select id="torneoTipo" name="tipo" required>
+                            <option value="">Seleccionar tipo</option>
+                            <option value="abierto" selected>Abierto</option>
+                            <option value="cerrado">Cerrado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="torneoFecha">Fecha del Torneo *</label>
                         <input type="date" id="torneoFecha" name="fecha" required>
                     </div>
@@ -270,31 +279,97 @@
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
     <script src="{{ url_for('static', filename='js/torneos.js') }}"></script>
-    
-    <script>
-        // Manejar logout
-        document.getElementById('logoutBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-            auth.logout();
-        });
-        
-        // Cargar información del usuario
-        document.addEventListener('DOMContentLoaded', function() {
-            const user = auth.getUser();
-            if (user) {
-                document.getElementById('userName').textContent = `${user.nombre} ${user.apellido}`;
-                document.getElementById('userEmail').textContent = user.email;
-                document.getElementById('userBadge').textContent = user.perfil;
-            }
-        });
 
-        // Función para navegar al dashboard
-        function navigateToDashboard(event) {
-            event.preventDefault();
-            // Limpiar URL y navegar
-            history.replaceState(null, null, '/');
-            window.location.href = '/dashboard';
-        }
-    </script>
-</body>
-</html>
+    <script>
+        // Override del manejo del formulario para asegurar que funcione
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('torneoForm');
+            
+            if (form) {
+                // Remover listeners anteriores
+                form.replaceWith(form.cloneNode(true));
+                const newForm = document.getElementById('torneoForm');
+                
+                newForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const submitBtn = newForm.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.textContent;
+                    
+                    try {
+                        // Obtener valores del formulario
+                        const nombre = document.getElementById('torneoNombre').value.trim();
+                        const superficie = document.getElementById('torneoSuperficie').value;
+                        const nivel = document.getElementById('torneoNivel').value;
+                        const tipo = document.getElementById('torneoTipo').value;
+                        const fecha = document.getElementById('torneoFecha').value;
+                        const hora = document.getElementById('torneoHora').value;
+                        const descripcion = document.getElementById('torneoDescripcion').value.trim();
+                        
+                        console.log('📋 Valores capturados:');
+                        console.log('  Nombre:', nombre);
+                        console.log('  Superficie:', superficie);
+                        console.log('  Nivel:', nivel);
+                        console.log('  Tipo:', tipo);
+                        console.log('  Fecha:', fecha);
+                        console.log('  Hora:', hora);
+                        console.log('  Descripción:', descripcion);
+                        
+                        // Validar campos requeridos
+                        if (!nombre) {
+                            alert('❌ El nombre es obligatorio');
+                            return;
+                        }
+                        
+                        if (!fecha) {
+                            alert('❌ La fecha es obligatoria');
+                            return;
+                        }
+                        
+                        if (!superficie) {
+                            alert('❌ La superficie es obligatoria');
+                            return;
+                        }
+                        
+                        if (!nivel) {
+                            alert('❌ El nivel es obligatorio');
+                            return;
+                        }
+                        
+                        if (!tipo) {
+                            alert('❌ El tipo de torneo es obligatorio');
+                            return;
+                        }
+                        
+                        // Preparar datos - USAR fecha_inicio en lugar de fecha
+                        const data = {
+                            nombre: nombre,
+                            superficie: superficie,
+                            nivel: nivel,
+                            tipo: tipo,
+                            fecha_inicio: fecha,  // ← ESTE ES EL CAMBIO CLAVE
+                            hora: hora,
+                            descripcion: descripcion
+                        };
+                        
+                        console.log('📤 Datos a enviar:', JSON.stringify(data, null, 2));
+                        
+                        // Obtener token
+                        const token = localStorage.getItem('auth_token');
+                        if (!token) {
+                            alert('❌ No hay sesión activa');
+                            return;
+                        }
+                        
+                        // Deshabilitar botón
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Guardando...';
+                        
+                        // Enviar petición
+                        const response = await fetch('/api/torneos', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                           

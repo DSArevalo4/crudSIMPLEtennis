@@ -17,6 +17,7 @@ from models.torneo_model import Torneo
 from models.partido_model import Partido
 from models.inscripcion_model import Inscripcion
 import requests
+import json
 
 app = Flask(__name__)
 
@@ -69,11 +70,6 @@ def login():
 def dashboard():
     """Dashboard principal"""
     return render_template('dashboard.html')
-
-@app.route('/torneos')
-def torneos():
-    """Página de torneos"""
-    return render_template('torneos.html')
 
 @app.route('/api/dashboard/stats')
 @require_auth
@@ -169,27 +165,81 @@ def get_torneo(torneo_id):
 @app.route('/api/torneos', methods=['POST'])
 @require_auth
 def create_torneo():
-    """Crear nuevo torneo"""
+    """Crear nuevo torneo - solo profesores y administradores"""
     try:
         data = request.get_json()
         
-        # Validar campos requeridos
-        required_fields = ['nombre', 'superficie', 'nivel', 'fecha']
-        for field in required_fields:
-            if not data.get(field):
-                return jsonify({'error': f'El campo {field} es obligatorio'}), 400
+        if not data:
+            print("❌ No se recibieron datos")
+            return jsonify({'error': 'No se recibieron datos'}), 400
+        
+        print(f"📥 Datos recibidos RAW: {json.dumps(data, indent=2)}")
+        
+        # Validaciones de campos...
+        nombre = data.get('nombre', '').strip()
+        if not nombre:
+            print("❌ Campo nombre vacío")
+            return jsonify({'error': 'El campo nombre es obligatorio'}), 400
+        
+        fecha = data.get('fecha_inicio') or data.get('fecha')
+        if not fecha:
+            print("❌ Campo fecha vacío")
+            return jsonify({'error': 'El campo fecha es obligatorio'}), 400
+        
+        superficie = data.get('superficie', '').strip()
+        if not superficie:
+            print("❌ Campo superficie vacío")
+            return jsonify({'error': 'El campo superficie es obligatorio'}), 400
+        
+        tipo = data.get('tipo', 'abierto').strip()
+        nivel = data.get('nivel', 'Intermedio').strip()
         
         session = get_db_session()
         
-        # Crear nuevo torneo
+        # Obtener y verificar usuario
+        user_id = get_jwt_identity()
+        print(f"🔍 Buscando usuario ID: {user_id}")
+        
+        usuario = session.query(Usuario).filter(
+            Usuario.id == user_id,
+            Usuario.activo == True
+        ).first()
+        
+        if not usuario:
+            print(f"❌ Usuario no encontrado o inactivo: {user_id}")
+            session.close()
+            return jsonify({'error': 'Usuario no encontrado o inactivo'}), 404
+        
+        print(f"✅ Usuario encontrado: {usuario.nombre} {usuario.apellido}")
+        print(f"   Perfil: {usuario.perfil}")
+        print(f"   Email: {usuario.email}")
+        
+        # Verificar perfil de profesor o administrador
+        if usuario.perfil not in ['profesor', 'administrador']:
+            print(f"❌ Usuario sin permisos suficientes")
+            print(f"   Perfil actual: {usuario.perfil}")
+            print(f"   Perfiles permitidos: profesor, administrador")
+            session.close()
+            return jsonify({
+                'error': 'Solo profesores y administradores pueden crear torneos',
+                'userProfile': usuario.perfil,
+                'requiredProfiles': ['profesor', 'administrador']
+            }), 403
+        
+        print(f"✅ Usuario autorizado para crear torneos")
+        print(f"   Perfil: {usuario.perfil}")
+        
+        # Crear torneo
         torneo = Torneo(
-            nombre=data['nombre'],
-            superficie=data['superficie'],
-            nivel=data['nivel'],
-            fecha=data['fecha'],
-            hora=data.get('hora'),
-            descripcion=data.get('descripcion'),
-            estado='pendiente'
+            nombre=nombre,
+            superficie=superficie,
+            fecha_inicio=fecha,
+            fecha_fin=data.get('fecha_fin'),
+            tipo=tipo,
+            estado=data.get('estado', 'planificado'),
+            profesor_id=user_id,
+            max_participantes=int(data.get('max_participantes', 32)),
+            descripcion=data.get('descripcion', '')
         )
         
         session.add(torneo)
@@ -199,12 +249,22 @@ def create_torneo():
         torneo_dict = torneo.as_dict()
         session.close()
         
+        print(f"✅ Torneo creado exitosamente")
+        print(f"   ID: {torneo.id}")
+        print(f"   Nombre: {torneo.nombre}")
+        print(f"   Profesor: {usuario.nombre} {usuario.apellido}")
+        
         return jsonify(torneo_dict), 201
         
     except Exception as e:
-        session.rollback()
-        session.close()
-        return jsonify({'error': str(e)}), 500
+        if 'session' in locals():
+            session.rollback()
+            session.close()
+        error_msg = str(e)
+        print(f"❌ Error creating torneo: {error_msg}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Error al crear torneo: {error_msg}'}), 500
 
 @app.route('/api/torneos/<int:torneo_id>', methods=['PUT'])
 @require_auth
@@ -241,8 +301,9 @@ def update_torneo(torneo_id):
         return jsonify(torneo_dict)
         
     except Exception as e:
-        session.rollback()
-        session.close()
+        if 'session' in locals():
+            session.rollback()
+            session.close()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/torneos/<int:torneo_id>', methods=['DELETE'])
@@ -300,325 +361,6 @@ def get_inscripciones_by_torneo(torneo_id):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-HTML = '''<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>API Tenis - Interfaz Moderna</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        :root {
-            --azul-palido: #EFFAFD;
-            --azul-real: #4A8BDF;
-            --berenjena: #A0006D;
-            --gris: #f4f4f4;
-            --borde: #e0e0e0;
-        }
-        body {
-            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
-            background: var(--azul-palido);
-            margin: 0;
-            padding: 0;
-        }
-        .navbar {
-            background: white;
-            box-shadow: 0 2px 8px rgba(74,139,223,0.05);
-            padding: 1em 2em;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .navbar h1 {
-            color: var(--azul-real);
-            font-size: 1.5em;
-            margin: 0;
-            letter-spacing: 1px;
-        }
-        .main-btns {
-            display: flex;
-            justify-content: center;
-            gap: 2em;
-            margin: 2em 0 1em 0;
-        }
-        .main-btn {
-            background: var(--azul-real);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 1em 2.5em;
-            font-size: 1.2em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            box-shadow: 0 2px 8px rgba(74,139,223,0.08);
-        }
-        .main-btn:hover {
-            background: #2561a8;
-        }
-        .container {
-            max-width: 600px;
-            margin: 2em auto;
-            background: white;
-            border-radius: 18px;
-            box-shadow: 0 4px 24px rgba(74,139,223,0.08);
-            padding: 2em 1.5em 1.5em 1.5em;
-        }
-        .list {
-            margin-top: 1em;
-        }
-        .item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--azul-palido);
-            border-radius: 10px;
-            padding: 0.7em 1em;
-            margin-bottom: 0.7em;
-            border: 1px solid var(--borde);
-        }
-        .item-info {
-            flex: 1;
-        }
-        .item-actions {
-            display: flex;
-            gap: 0.5em;
-        }
-        .btn-editar, .btn-eliminar, .btn-crear {
-            border: none;
-            border-radius: 8px;
-            padding: 0.5em 1.2em;
-            font-size: 1em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s;
-        }
-        .btn-editar { background: var(--berenjena); color: white; }
-        .btn-editar:hover { background: #6d004a; }
-        .btn-eliminar { background: white; color: var(--berenjena); border: 1.5px solid var(--berenjena); }
-        .btn-eliminar:hover { background: var(--berenjena); color: white; }
-        .btn-crear { background: var(--azul-real); color: white; margin-top: 1em; width: 100%; }
-        .btn-crear:hover { background: #2561a8; }
-        .form-modal {
-            display: none;
-            flex-direction: column;
-            gap: 0.7em;
-            background: var(--gris);
-            border-radius: 12px;
-            padding: 1.5em;
-            margin-top: 1em;
-            box-shadow: 0 2px 8px rgba(160,0,109,0.08);
-        }
-        .form-modal.active {
-            display: flex;
-        }
-        label {
-            font-weight: 500;
-            color: #333;
-        }
-        input, select {
-            padding: 0.6em;
-            border-radius: 7px;
-            border: 1px solid var(--borde);
-            font-size: 1em;
-        }
-        .result {
-            background: var(--gris);
-            border-radius: 10px;
-            padding: 1em;
-            margin-top: 1.5em;
-            font-size: 0.98em;
-            color: #222;
-            word-break: break-all;
-        }
-        @media (max-width: 700px) {
-            .container { max-width: 98vw; padding: 1em 0.5em; }
-            .navbar { flex-direction: column; align-items: flex-start; padding: 1em 1em; }
-            .main-btns { flex-direction: column; gap: 1em; }
-        }
-    </style>
-</head>
-<body>
-    <div class="navbar">
-        <h1>API Tenis</h1>
-    </div>
-    <div class="main-btns">
-        <button class="main-btn" onclick="showSection('torneos')">Torneos</button>
-        <button class="main-btn" onclick="showSection('partidos')">Partidos</button>
-    </div>
-    <div class="container">
-        <div id="torneos-section" style="display:none">
-            <h2>Torneos</h2>
-            <div id="torneos-list" class="list"></div>
-            <button class="btn-crear" onclick="showTorneoForm()">Crear Torneo</button>
-            <form id="torneo-form" class="form-modal">
-                <input type="hidden" name="id" id="torneo-form-id">
-                <label>Nombre: <input name="nombre" id="torneo-form-nombre" required></label>
-                <label>Superficie: <input name="superficie" id="torneo-form-superficie"></label>
-                <label>Nivel: <input name="nivel" id="torneo-form-nivel"></label>
-                <label>Fecha: <input name="fecha" id="torneo-form-fecha" placeholder="YYYY-MM-DD"></label>
-                <button class="btn-crear" type="submit">Guardar</button>
-                <button type="button" class="btn-eliminar" onclick="closeTorneoForm()">Cancelar</button>
-            </form>
-        </div>
-        <div id="partidos-section" style="display:none">
-            <h2>Partidos</h2>
-            <div id="partidos-list" class="list"></div>
-            <button class="btn-crear" onclick="showPartidoForm()">Crear Partido</button>
-            <form id="partido-form" class="form-modal">
-                <input type="hidden" name="id" id="partido-form-id">
-                <label>Torneo ID: <input name="torneo_id" id="partido-form-torneo_id" required></label>
-                <label>Ganador ID: <input name="ganador_id" id="partido-form-ganador_id" required></label>
-                <label>Perdedor ID: <input name="perdedor_id" id="partido-form-perdedor_id" required></label>
-                <label>Resultado: <input name="resultado" id="partido-form-resultado"></label>
-                <label>Fecha: <input name="fecha" id="partido-form-fecha" placeholder="YYYY-MM-DD"></label>
-                <button class="btn-crear" type="submit">Guardar</button>
-                <button type="button" class="btn-eliminar" onclick="closePartidoForm()">Cancelar</button>
-            </form>
-        </div>
-        <div id="result" class="result" style="display:none"></div>
-    </div>
-    <script>
-        function showSection(section) {
-            document.getElementById('torneos-section').style.display = section === 'torneos' ? 'block' : 'none';
-            document.getElementById('partidos-section').style.display = section === 'partidos' ? 'block' : 'none';
-            document.getElementById('result').style.display = 'none';
-            if(section === 'torneos') loadTorneos();
-            if(section === 'partidos') loadPartidos();
-        }
-        function loadTorneos() {
-            fetch('/api/torneos').then(r=>r.json()).then(data=>{
-                const list = document.getElementById('torneos-list');
-                list.innerHTML = '';
-                data.forEach(t=>{
-                    const div = document.createElement('div');
-                    div.className = 'item';
-                    div.innerHTML = `<div class='item-info'><b>${t.nombre}</b> (${t.nivel})<br><small>${t.superficie} - ${t.fecha||''}</small></div>
-                        <div class='item-actions'>
-                            <button class='btn-editar' onclick='editTorneo(${JSON.stringify(t)})'>Editar</button>
-                            <button class='btn-eliminar' onclick='deleteTorneo("${t.id}")'>Eliminar</button>
-                        </div>`;
-                    list.appendChild(div);
-                });
-            });
-        }
-        function showTorneoForm(t=null) {
-            const form = document.getElementById('torneo-form');
-            form.classList.add('active');
-            if(t) {
-                document.getElementById('torneo-form-id').value = t.id;
-                document.getElementById('torneo-form-nombre').value = t.nombre;
-                document.getElementById('torneo-form-superficie').value = t.superficie;
-                document.getElementById('torneo-form-nivel').value = t.nivel;
-                document.getElementById('torneo-form-fecha').value = t.fecha||'';
-            } else {
-                form.reset();
-                document.getElementById('torneo-form-id').value = '';
-            }
-        }
-        function closeTorneoForm() {
-            document.getElementById('torneo-form').classList.remove('active');
-            document.getElementById('torneo-form').reset();
-            document.getElementById('torneo-form-id').value = '';
-        }
-        function editTorneo(t) {
-            showTorneoForm(t);
-        }
-        function deleteTorneo(id) {
-            if(confirm('¿Eliminar torneo?')) {
-                fetch(`/api/torneos/${id}`, {method:'DELETE'}).then(r=>r.text()).then(msg=>{
-                    showResult(msg); loadTorneos();
-                });
-            }
-        }
-        document.getElementById('torneo-form').onsubmit = function(e) {
-            e.preventDefault();
-            const id = document.getElementById('torneo-form-id').value;
-            const data = {
-                nombre: document.getElementById('torneo-form-nombre').value,
-                superficie: document.getElementById('torneo-form-superficie').value,
-                nivel: document.getElementById('torneo-form-nivel').value,
-                fecha: document.getElementById('torneo-form-fecha').value
-            };
-            let url = '/api/torneos', method = 'POST';
-            if(id) { url += `/${id}`; method = 'PUT'; }
-            fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)})
-                .then(r=>r.text()).then(msg=>{ showResult(msg); closeTorneoForm(); loadTorneos(); });
-        };
-        function loadPartidos() {
-            fetch('/api/partidos').then(r=>r.json()).then(data=>{
-                const list = document.getElementById('partidos-list');
-                list.innerHTML = '';
-                data.forEach(p=>{
-                    const div = document.createElement('div');
-                    div.className = 'item';
-                    div.innerHTML = `<div class='item-info'><b>${p.resultado||''}</b> - Torneo: ${p.torneo_id}<br><small>Ganador: ${p.ganador_id} | Perdedor: ${p.perdedor_id} | ${p.fecha||''}</small></div>
-                        <div class='item-actions'>
-                            <button class='btn-editar' onclick='editPartido(${JSON.stringify(p)})'>Editar</button>
-                            <button class='btn-eliminar' onclick='deletePartido("${p.id}")'>Eliminar</button>
-                        </div>`;
-                    list.appendChild(div);
-                });
-            });
-        }
-        function showPartidoForm(p=null) {
-            const form = document.getElementById('partido-form');
-            form.classList.add('active');
-            if(p) {
-                document.getElementById('partido-form-id').value = p.id;
-                document.getElementById('partido-form-torneo_id').value = p.torneo_id;
-                document.getElementById('partido-form-ganador_id').value = p.ganador_id;
-                document.getElementById('partido-form-perdedor_id').value = p.perdedor_id;
-                document.getElementById('partido-form-resultado').value = p.resultado||'';
-                document.getElementById('partido-form-fecha').value = p.fecha||'';
-            } else {
-                form.reset();
-                document.getElementById('partido-form-id').value = '';
-            }
-        }
-        function closePartidoForm() {
-            document.getElementById('partido-form').classList.remove('active');
-            document.getElementById('partido-form').reset();
-            document.getElementById('partido-form-id').value = '';
-        }
-        function editPartido(p) {
-            showPartidoForm(p);
-        }
-        function deletePartido(id) {
-            if(confirm('¿Eliminar partido?')) {
-                fetch(`/api/partidos/${id}`, {method:'DELETE'}).then(r=>r.text()).then(msg=>{
-                    showResult(msg); loadPartidos();
-                });
-            }
-        }
-        document.getElementById('partido-form').onsubmit = function(e) {
-            e.preventDefault();
-            const id = document.getElementById('partido-form-id').value;
-            const data = {
-                torneo_id: document.getElementById('partido-form-torneo_id').value,
-                ganador_id: document.getElementById('partido-form-ganador_id').value,
-                perdedor_id: document.getElementById('partido-form-perdedor_id').value,
-                resultado: document.getElementById('partido-form-resultado').value,
-                fecha: document.getElementById('partido-form-fecha').value
-            };
-            let url = '/api/partidos', method = 'POST';
-            if(id) { url += `/${id}`; method = 'PUT'; }
-            fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)})
-                .then(r=>r.text()).then(msg=>{ showResult(msg); closePartidoForm(); loadPartidos(); });
-        };
-        function showResult(msg) {
-            const r = document.getElementById('result');
-            r.innerText = msg;
-            r.style.display = 'block';
-            setTimeout(()=>{r.style.display='none';}, 4000);
-        }
-    </script>
-</body>
-</html>'''
-
-@app.route('/')
-def home():
-    return Response(HTML, mimetype='text/html')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

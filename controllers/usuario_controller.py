@@ -1,9 +1,12 @@
 # controllers/usuario_controller.py
 from flask import Blueprint, request, jsonify
-from services.usuario_service import UsuarioService
+from flask_jwt_extended import get_jwt_identity
 from config.database import get_db_session
+from middleware.auth_middleware import require_auth, require_admin  # Corregido: middleware sin 's'
+from models.usuario_model import Usuario
+import traceback
 
-usuario_bp = Blueprint('usuario_bp', __name__)
+usuario_bp = Blueprint('usuario', __name__)
 
 @usuario_bp.route('/usuarios', methods=['GET'])
 def get_usuarios():
@@ -101,60 +104,116 @@ def crear_usuario():
         return jsonify({'error': str(e)}), 500
 
 @usuario_bp.route('/usuarios/<int:usuario_id>', methods=['PUT'])
-def actualizar_usuario(usuario_id):
-    """
-    PUT /usuarios/<usuario_id>
-    Actualiza un usuario existente.
-    Headers requeridos:
-        X-User-ID: ID del usuario
-        X-User-Perfil: Perfil del usuario
-    """
+@require_auth
+def update_usuario(usuario_id):
+    """Actualizar usuario existente."""
     try:
-        usuario_actualizador_id = request.headers.get('X-User-ID')
-        usuario_actualizador_perfil = request.headers.get('X-User-Perfil')
-        
-        if not usuario_actualizador_id or not usuario_actualizador_perfil:
-            return jsonify({'error': 'Headers X-User-ID y X-User-Perfil son requeridos'}), 400
-
         data = request.get_json()
-        service = UsuarioService(get_db_session())
-        usuario = service.actualizar_usuario(usuario_id, data, int(usuario_actualizador_id), usuario_actualizador_perfil)
         
-        if usuario:
-            return jsonify(usuario.as_dict()), 200
-        return jsonify({'error': 'Usuario no encontrado'}), 404
+        if not data:
+            return jsonify({'error': 'No se recibieron datos'}), 400
         
-    except ValueError as e:
-        return jsonify({'error': str(e)}), 400
+        print(f"📥 Actualizando usuario ID {usuario_id}: {data}")
+        
+        session = get_db_session()
+        
+        # Buscar usuario
+        usuario = session.query(Usuario).filter(Usuario.id == usuario_id).first()
+        
+        if not usuario:
+            session.close()
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+        
+        # Actualizar campos
+        if 'nombre' in data:
+            usuario.nombre = data['nombre']
+        if 'apellido' in data:
+            usuario.apellido = data['apellido']
+        if 'email' in data:
+            # Verificar que el email no esté en uso por otro usuario
+            existing = session.query(Usuario).filter(
+                Usuario.email == data['email'],
+                Usuario.id != usuario_id
+            ).first()
+            if existing:
+                session.close()
+                return jsonify({'error': 'El email ya está en uso'}), 400
+            usuario.email = data['email']
+        if 'telefono' in data:
+            usuario.telefono = data['telefono']
+        if 'username' in data:
+            # Verificar que el username no esté en uso por otro usuario
+            existing = session.query(Usuario).filter(
+                Usuario.username == data['username'],
+                Usuario.id != usuario_id
+            ).first()
+            if existing:
+                session.close()
+                return jsonify({'error': 'El username ya está en uso'}), 400
+            usuario.username = data['username']
+        if 'perfil' in data:
+            usuario.perfil = data['perfil']
+        if 'activo' in data:
+            usuario.activo = data['activo']
+        if 'password' in data and data['password']:
+            usuario.set_password(data['password'])
+        
+        session.commit()
+        
+        usuario_dict = usuario.as_dict()
+        session.close()
+        
+        print(f"✅ Usuario actualizado: {usuario_dict}")
+        
+        return jsonify(usuario_dict), 200
+        
     except Exception as e:
+        if 'session' in locals():
+            session.rollback()
+            session.close()
+        print(f"❌ Error actualizando usuario: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @usuario_bp.route('/usuarios/<int:usuario_id>', methods=['DELETE'])
-def eliminar_usuario(usuario_id):
-    """
-    DELETE /usuarios/<usuario_id>
-    Elimina (desactiva) un usuario.
-    Headers requeridos:
-        X-User-ID: ID del usuario
-        X-User-Perfil: Perfil del usuario (debe ser 'administrador')
-    """
+@require_auth
+def delete_usuario(usuario_id):
+    """Eliminar usuario."""
     try:
-        usuario_eliminador_id = request.headers.get('X-User-ID')
-        usuario_eliminador_perfil = request.headers.get('X-User-Perfil')
+        print(f"🗑️ Eliminando usuario ID: {usuario_id}")
         
-        if not usuario_eliminador_id or not usuario_eliminador_perfil:
-            return jsonify({'error': 'Headers X-User-ID y X-User-Perfil son requeridos'}), 400
-
-        service = UsuarioService(get_db_session())
-        result = service.eliminar_usuario(usuario_id, int(usuario_eliminador_id), usuario_eliminador_perfil)
+        session = get_db_session()
         
-        if result:
-            return jsonify({'message': 'Usuario eliminado'}), 200
-        return jsonify({'error': 'Usuario no encontrado'}), 404
+        # Buscar usuario
+        usuario = session.query(Usuario).filter(Usuario.id == usuario_id).first()
         
-    except ValueError as e:
-        return jsonify({'error': str(e)}), 400
+        if not usuario:
+            session.close()
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+        
+        # Verificar que no se elimine el usuario actual
+        current_user_id = get_jwt_identity()
+        if usuario_id == current_user_id:
+            session.close()
+            return jsonify({'error': 'No puedes eliminar tu propio usuario'}), 400
+        
+        # Eliminar usuario
+        session.delete(usuario)
+        session.commit()
+        session.close()
+        
+        print(f"✅ Usuario eliminado: {usuario.username}")
+        
+        return jsonify({'message': 'Usuario eliminado exitosamente'}), 200
+        
     except Exception as e:
+        if 'session' in locals():
+            session.rollback()
+            session.close()
+        print(f"❌ Error eliminando usuario: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @usuario_bp.route('/usuarios/<int:usuario_id>/activar', methods=['POST'])

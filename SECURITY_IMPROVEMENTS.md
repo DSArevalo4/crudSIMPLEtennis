@@ -137,3 +137,4 @@ Se han implementado múltiples mejoras de seguridad para proteger la API contra 
 3. Implementar rate limiting
 4. Configurar monitoreo de seguridad
 5. Revisar y actualizar headers de seguridad según necesidades
+

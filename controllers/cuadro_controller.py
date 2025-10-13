@@ -1,9 +1,17 @@
 # controllers/cuadro_controller.py
 from flask import Blueprint, request, jsonify
-from services.cuadro_service import CuadroService
+from flask_jwt_extended import get_jwt_identity
 from config.database import get_db_session
+from middleware.auth_middleware import require_auth  # Corregido
+from models.torneo_model import Torneo
+from models.inscripcion_model import Inscripcion
+from models.partido_model import Partido
+from models.usuario_model import Usuario
+import traceback
+import math
+import random
 
-cuadro_bp = Blueprint('cuadro_bp', __name__)
+cuadro_bp = Blueprint('cuadro', __name__)
 
 @cuadro_bp.route('/torneos/<int:torneo_id>/cuadro/generar', methods=['POST'])
 def generar_cuadro_torneo(torneo_id):

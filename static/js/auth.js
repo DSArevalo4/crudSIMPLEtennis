@@ -8,49 +8,21 @@ class AuthService {
     this.token = localStorage.getItem(AUTH_TOKEN_KEY)
     this.user = JSON.parse(localStorage.getItem(USER_DATA_KEY) || "null")
     this.tokenExpiry = localStorage.getItem(TOKEN_EXPIRY_KEY)
+    this.pauseValidation = false
     this.initSecurity()
   }
 
   initSecurity() {
     // Solo aplicar seguridad si NO estamos en la página de login
     if (window.location.pathname === '/login' || window.location.pathname === '/') {
-      return // No aplicar seguridad en la página de login
+      return
     }
-    
-    // Limpiar URL para que no muestre /dashboard
-    this.cleanUrl()
-    
-    // Prevenir navegación hacia atrás
-    this.preventBackNavigation()
     
     // Verificar token periódicamente
     this.startTokenValidation()
     
     // Limpiar datos al cerrar ventana/pestaña
     this.setupCleanup()
-  }
-
-  cleanUrl() {
-    // Limpiar la URL para que no muestre /dashboard
-    if (window.location.pathname === '/dashboard') {
-      history.replaceState(null, null, '/')
-    }
-  }
-
-  preventBackNavigation() {
-    // Prevenir el botón atrás del navegador
-    window.addEventListener('popstate', (event) => {
-      if (this.isAuthenticated()) {
-        // Si está autenticado, prevenir navegación hacia atrás
-        history.pushState(null, null, '/')
-        event.preventDefault()
-      }
-    })
-
-    // Agregar estado inicial al historial con URL limpia
-    if (this.isAuthenticated()) {
-      history.pushState(null, null, '/')
-    }
   }
 
   startTokenValidation() {
@@ -114,21 +86,11 @@ class AuthService {
   }
 
   setupCleanup() {
-    // Limpiar datos al cerrar ventana/pestaña
-    window.addEventListener('beforeunload', () => {
-      // Solo limpiar si el usuario cierra completamente la ventana
-      if (event.type === 'beforeunload') {
-        this.clearAuth()
-      }
-    })
-
     // Detectar cuando la pestaña se vuelve inactiva
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
-        // Pausar validaciones cuando la pestaña no está activa
         this.pauseValidation = true
       } else {
-        // Reanudar validaciones cuando la pestaña vuelve a estar activa
         this.pauseValidation = false
         this.validateToken()
       }
@@ -181,13 +143,11 @@ class AuthService {
     
     this.tokenExpiry = expiry.toISOString()
     
-    // Redirigir al dashboard con URL limpia
-    this.redirectToDashboard()
+    // Redirigir al dashboard
+    window.location.href = "/dashboard"
   }
 
   redirectToDashboard() {
-    // Redirigir al dashboard con URL limpia
-    history.replaceState(null, null, '/')
     window.location.href = "/dashboard"
   }
 
@@ -206,8 +166,6 @@ class AuthService {
   }
 
   redirectToLogin() {
-    // Limpiar historial y redirigir
-    history.replaceState(null, null, '/')
     window.location.href = "/login"
   }
 
@@ -222,6 +180,33 @@ class AuthService {
       return false
     }
     return true
+  }
+
+  // Método helper para agregar el token a las peticiones fetch
+  async fetchWithAuth(url, options = {}) {
+    if (!this.token) {
+      throw new Error('No hay token de autenticación')
+    }
+
+    const headers = {
+      ...options.headers,
+      'Authorization': `Bearer ${this.token}`,
+      'Content-Type': 'application/json'
+    }
+
+    const response = await fetch(url, {
+      ...options,
+      headers
+    })
+
+    // Si el token expiró, limpiar y redirigir
+    if (response.status === 401) {
+      this.clearAuth()
+      this.redirectToLogin()
+      throw new Error('Sesión expirada')
+    }
+
+    return response
   }
 }
 

@@ -97,3 +97,4 @@ def get_cors_config():
         'allow_headers': SECURITY_CONFIG['CORS_HEADERS'],
         'supports_credentials': True
     }
+

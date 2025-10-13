@@ -77,7 +77,7 @@
             </div>
 
             <nav class="sidebar-nav">
-                <a href="/dashboard" class="nav-item active">
+                <a href="#" class="nav-item active" data-view="dashboard" onclick="showView('dashboard', event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7"/>
                         <rect x="14" y="3" width="7" height="7"/>
@@ -86,21 +86,21 @@
                     </svg>
                     <span>Dashboard</span>
                 </a>
-                <a href="/torneos" class="nav-item" onclick="navigateToTorneos(event)">
+                <a href="#" class="nav-item" data-view="torneos" onclick="showView('torneos', event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                         <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
                     </svg>
                     <span>Torneos</span>
                 </a>
-                <a href="/partidos" class="nav-item">
+                <a href="#" class="nav-item" data-view="partidos" onclick="showView('partidos', event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"/>
                         <path d="M12 6v6l4 2"/>
                     </svg>
                     <span>Partidos</span>
                 </a>
-                <a href="/inscripciones" class="nav-item">
+                <a href="#" class="nav-item" data-view="inscripciones" onclick="showView('inscripciones', event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="8.5" cy="7" r="4"/>
@@ -109,7 +109,7 @@
                     </svg>
                     <span>Inscripciones</span>
                 </a>
-                <a href="#" class="nav-item" onclick="openUsuariosModal(); return false;">
+                <a href="#" class="nav-item" data-view="usuarios" onclick="showView('usuarios', event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
@@ -118,7 +118,7 @@
                     </svg>
                     <span>Usuarios</span>
                 </a>
-                <a href="/notificaciones" class="nav-item">
+                <a href="#" class="nav-item" data-view="notificaciones" onclick="showView('notificaciones', event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                         <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
@@ -163,233 +163,413 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <header class="page-header">
-                <div class="header-left">
-                    <h1>Dashboard</h1>
-                    <p class="subtitle">Gestión de Torneos</p>
-                </div>
-                <div class="header-right">
-                    <div class="date-picker">
-                        <input type="date" id="startDate" class="date-input">
-                        <span>-</span>
-                        <input type="date" id="endDate" class="date-input">
+            <!-- Vista Dashboard (por defecto) -->
+            <div id="view-dashboard" class="content-view active">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h1>Dashboard</h1>
+                        <p class="subtitle">Gestión de Torneos</p>
                     </div>
-                    <select class="filter-select">
-                        <option>Todos</option>
-                        <option>Activos</option>
-                        <option>Finalizados</option>
-                    </select>
-                </div>
-            </header>
+                    <div class="header-right">
+                        <div class="date-picker">
+                            <input type="date" id="startDate" class="date-input">
+                            <span>-</span>
+                            <input type="date" id="endDate" class="date-input">
+                        </div>
+                        <select class="filter-select">
+                            <option>Todos</option>
+                            <option>Activos</option>
+                            <option>Finalizados</option>
+                        </select>
+                    </div>
+                </header>
 
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon blue">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                            <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-                        </svg>
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Torneos Activos</p>
+                            <h2 class="stat-value" id="activeTournaments">0</h2>
+                            <p class="stat-change positive">+20% vs mes anterior</p>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Torneos Activos</p>
-                        <h2 class="stat-value" id="activeTournaments">0</h2>
-                        <p class="stat-change positive">+20% vs mes anterior</p>
+
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Partidos Jugados</p>
+                            <h2 class="stat-value" id="totalMatches">0</h2>
+                            <p class="stat-change positive">+15% vs mes anterior</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card highlight">
+                        <div class="stat-icon-large">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Tasa de Participación</p>
+                            <h2 class="stat-value-large" id="participationRate">0%</h2>
+                            <p class="stat-sublabel">De 100 deportistas</p>
+                            <a href="#" class="stat-link">Ver detalles →</a>
+                        </div>
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <div class="stat-icon orange">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M12 6v6l4 2"/>
-                        </svg>
+                <!-- Chart Section -->
+                <div class="chart-section">
+                    <div class="chart-header">
+                        <h2>Actividad de Torneos</h2>
+                        <div class="chart-legend">
+                            <span class="legend-item">
+                                <span class="legend-dot blue"></span>
+                                Torneos Activos
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-dot orange"></span>
+                                Partidos Jugados
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-dot green"></span>
+                                Inscripciones
+                            </span>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Partidos Jugados</p>
-                        <h2 class="stat-value" id="totalMatches">0</h2>
-                        <p class="stat-change positive">+15% vs mes anterior</p>
+                    <div class="chart-container">
+                        <canvas id="activityChart"></canvas>
                     </div>
                 </div>
 
-                <div class="stat-card highlight">
-                    <div class="stat-icon-large">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                        </svg>
+                <!-- Quick Stats -->
+                <div class="quick-stats-grid">
+                    <div class="quick-stat-card">
+                        <div class="quick-stat-icon blue">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="quick-stat-content">
+                            <h3 id="totalPlayers">0</h3>
+                            <p>Deportistas Registrados</p>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Tasa de Participación</p>
-                        <h2 class="stat-value-large" id="participationRate">0%</h2>
-                        <p class="stat-sublabel">De 100 deportistas</p>
-                        <a href="#" class="stat-link">Ver detalles →</a>
+
+                    <div class="quick-stat-card">
+                        <div class="quick-stat-icon orange">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="8.5" cy="7" r="4"/>
+                                <line x1="20" y1="8" x2="20" y2="14"/>
+                            </svg>
+                        </div>
+                        <div class="quick-stat-content">
+                            <h3 id="pendingInscriptions">0</h3>
+                            <p>Inscripciones Pendientes</p>
+                        </div>
+                    </div>
+
+                    <div class="quick-stat-card">
+                        <div class="quick-stat-icon green">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                        </div>
+                        <div class="quick-stat-content">
+                            <h3 id="completionRate">0%</h3>
+                            <p>Tasa de Finalización</p>
+                        </div>
+                    </div>
+
+                    <div class="quick-stat-card">
+                        <div class="quick-stat-icon purple">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                        </div>
+                        <div class="quick-stat-content">
+                            <h3 id="avgMatchDuration">0</h3>
+                            <p>Duración Promedio (min)</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Chart Section -->
-            <div class="chart-section">
-                <div class="chart-header">
-                    <h2>Actividad de Torneos</h2>
-                    <div class="chart-legend">
-                        <span class="legend-item">
-                            <span class="legend-dot blue"></span>
-                            Torneos Activos
-                        </span>
-                        <span class="legend-item">
-                            <span class="legend-dot orange"></span>
-                            Partidos Jugados
-                        </span>
-                        <span class="legend-item">
-                            <span class="legend-dot green"></span>
-                            Inscripciones
-                        </span>
+            <!-- Vista Torneos -->
+            <div id="view-torneos" class="content-view" style="display: none;">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h1>Torneos</h1>
+                        <p class="subtitle">Gestión de Torneos de Tenis</p>
                     </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="activityChart"></canvas>
+                    <div class="header-right">
+                        <button class="btn btn-primary" onclick="openTorneoForm()" id="newTournamentBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Nuevo Torneo
+                        </button>
+                    </div>
+                </header>
+
+                <div class="torneos-container">
+                    <div class="torneos-list" id="torneosList">
+                        <div class="loading">Cargando torneos...</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Quick Stats -->
-            <div class="quick-stats-grid">
-                <div class="quick-stat-card">
-                    <div class="quick-stat-icon blue">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                        </svg>
-                    </div>
-                    <div class="quick-stat-content">
-                        <h3 id="totalPlayers">0</h3>
-                        <p>Deportistas Registrados</p>
-                    </div>
-                </div>
-
-                <div class="quick-stat-card">
-                    <div class="quick-stat-icon orange">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="8.5" cy="7" r="4"/>
-                            <line x1="20" y1="8" x2="20" y2="14"/>
-                        </svg>
-                    </div>
-                    <div class="quick-stat-content">
-                        <h3 id="pendingInscriptions">0</h3>
-                        <p>Inscripciones Pendientes</p>
-                    </div>
-                </div>
-
-                <div class="quick-stat-card">
-                    <div class="quick-stat-icon green">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                        </svg>
-                    </div>
-                    <div class="quick-stat-content">
-                        <h3 id="completionRate">0%</h3>
-                        <p>Tasa de Finalización</p>
-                    </div>
-                </div>
-
-                <div class="quick-stat-card">
-                    <div class="quick-stat-icon purple">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                    </div>
-                    <div class="quick-stat-content">
-                        <h3 id="avgMatchDuration">0</h3>
-                        <p>Duración Promedio (min)</p>
-                    </div>
+            <!-- Vista Partidos -->
+            <div id="view-partidos" class="content-view" style="display: none;">
+                <header class="page-header">
+                    <h1>Partidos</h1>
+                    <p class="subtitle">Gestión de Partidos</p>
+                </header>
+                <div class="content-placeholder">
+                    <p>Vista de partidos en construcción...</p>
                 </div>
             </div>
-        </main>
-    </div>
 
-    <!-- Modal de Gestión de Usuarios -->
-    <div id="usuariosModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Gestión de Usuarios</h2>
-                <button class="close-btn" onclick="closeUsuariosModal()">&times;</button>
-            </div>
-            
-            <div class="modal-body">
-                <!-- Botón para crear nuevo usuario -->
-                <div class="action-bar">
-                    <button class="btn btn-primary" onclick="openCreateUsuarioForm()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        Nuevo Usuario
-                    </button>
-                </div>
-
-                <!-- Lista de usuarios -->
-                <div class="usuarios-list" id="usuariosList">
-                    <div class="loading">Cargando usuarios...</div>
+            <!-- Vista Inscripciones -->
+            <div id="view-inscripciones" class="content-view" style="display: none;">
+                <header class="page-header">
+                    <h1>Inscripciones</h1>
+                    <p class="subtitle">Gestión de Inscripciones</p>
+                </header>
+                <div class="content-placeholder">
+                    <p>Vista de inscripciones en construcción...</p>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Modal de Formulario de Usuario -->
-    <div id="usuarioFormModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="usuarioFormTitle">Crear Usuario</h2>
-                <button class="close-btn" onclick="closeUsuarioFormModal()">&times;</button>
-            </div>
-            
-            <div class="modal-body">
-                <form id="usuarioForm">
-                    <div class="form-group">
-                        <label for="usuarioNombre">Nombre *</label>
-                        <input type="text" id="usuarioNombre" name="nombre" required>
+            <!-- Vista Usuarios -->
+            <div id="view-usuarios" class="content-view" style="display: none;">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h1>Usuarios</h1>
+                        <p class="subtitle">Gestión de Usuarios del Sistema</p>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="usuarioApellido">Apellido *</label>
-                        <input type="text" id="usuarioApellido" name="apellido" required>
+                    <div class="header-right">
+                        <button class="btn btn-primary" onclick="openUsuarioForm()" id="newUserBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Nuevo Usuario
+                        </button>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="usuarioEmail">Email *</label>
-                        <input type="email" id="usuarioEmail" name="email" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="usuarioTelefono">Teléfono</label>
-                        <input type="tel" id="usuarioTelefono" name="telefono">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="usuarioUsername">Username *</label>
-                        <input type="text" id="usuarioUsername" name="username" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="usuarioPassword">Contraseña *</label>
-                        <input type="password" id="usuarioPassword" name="password" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="usuarioPerfil">Perfil *</label>
-                        <select id="usuarioPerfil" name="perfil" required>
+                </header>
+
+                <!-- Filtros de usuarios -->
+                <div class="filters-container">
+                    <div class="filter-group">
+                        <label for="filterPerfil">Perfil:</label>
+                        <select id="filterPerfil" onchange="loadUsuarios()">
+                            <option value="">Todos</option>
                             <option value="deportista">Deportista</option>
                             <option value="profesor">Profesor</option>
                             <option value="administrador">Administrador</option>
                         </select>
                     </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeUsuarioFormModal()">Cancelar</button>
-                        <button type="submit" class="btn btn-primary" id="usuarioSubmitBtn">Guardar</button>
+                    <div class="filter-group">
+                        <label for="filterActivo">Estado:</label>
+                        <select id="filterActivo" onchange="loadUsuarios()">
+                            <option value="">Todos</option>
+                            <option value="true">Activos</option>
+                            <option value="false">Inactivos</option>
+                        </select>
                     </div>
-                </form>
+                    <div class="filter-group">
+                        <input type="text" id="searchUsuarios" placeholder="Buscar por nombre o email..." onkeyup="loadUsuarios()">
+                    </div>
+                </div>
+
+                <div class="usuarios-container">
+                    <div class="usuarios-list" id="usuariosList">
+                        <div class="loading">Cargando usuarios...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista Notificaciones -->
+            <div id="view-notificaciones" class="content-view" style="display: none;">
+                <header class="page-header">
+                    <h1>Notificaciones</h1>
+                    <p class="subtitle">Centro de Notificaciones</p>
+                </header>
+                <div class="content-placeholder">
+                    <p>Vista de notificaciones en construcción...</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal de Usuario -->
+        <div id="usuarioFormModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="usuarioFormTitle">Crear Usuario</h2>
+                    <button class="close-btn" onclick="closeUsuarioFormModal()">&times;</button>
+                </div>
+                
+                <div class="modal-body">
+                    <form id="usuarioForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="usuarioNombre">Nombre *</label>
+                                <input type="text" id="usuarioNombre" name="nombre" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="usuarioApellido">Apellido *</label>
+                                <input type="text" id="usuarioApellido" name="apellido" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="usuarioEmail">Email *</label>
+                                <input type="email" id="usuarioEmail" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="usuarioTelefono">Teléfono</label>
+                                <input type="tel" id="usuarioTelefono" name="telefono">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="usuarioUsername">Usuario *</label>
+                                <input type="text" id="usuarioUsername" name="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="usuarioPerfil">Perfil *</label>
+                                <select id="usuarioPerfil" name="perfil" required>
+                                    <option value="">Seleccionar perfil</option>
+                                    <option value="deportista">Deportista</option>
+                                    <option value="profesor">Profesor</option>
+                                    <option value="administrador">Administrador</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="passwordGroup">
+                            <label for="usuarioPassword">Contraseña *</label>
+                            <input type="password" id="usuarioPassword" name="password" required>
+                            <small>Mínimo 6 caracteres</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="usuarioActivo" name="activo" checked>
+                                Usuario activo
+                            </label>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeUsuarioFormModal()">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" id="usuarioSubmitBtn">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Formulario de Torneo -->
+        <div id="torneoFormModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="torneoFormTitle">Crear Torneo</h2>
+                    <button class="close-btn" onclick="closeTorneoFormModal()">&times;</button>
+                </div>
+                
+                <div class="modal-body">
+                    <form id="torneoForm">
+                        <div class="form-group">
+                            <label for="torneoNombre">Nombre del Torneo *</label>
+                            <input type="text" id="torneoNombre" name="nombre" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="torneoSuperficie">Superficie *</label>
+                            <select id="torneoSuperficie" name="superficie" required>
+                                <option value="">Seleccionar superficie</option>
+                                <option value="Arcilla">Arcilla</option>
+                                <option value="Césped">Césped</option>
+                                <option value="Dura">Dura</option>
+                                <option value="Sintética">Sintética</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="torneoNivel">Nivel *</label>
+                            <select id="torneoNivel" name="nivel" required>
+                                <option value="">Seleccionar nivel</option>
+                                <option value="Principiante">Principiante</option>
+                                <option value="Intermedio">Intermedio</option>
+                                <option value="Avanzado">Avanzado</option>
+                                <option value="Profesional">Profesional</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="torneoTipo">Tipo de Torneo *</label>
+                            <select id="torneoTipo" name="tipo" required>
+                                <option value="">Seleccionar tipo</option>
+                                <option value="abierto" selected>Abierto</option>
+                                <option value="cerrado">Cerrado</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="torneoFecha">Fecha del Torneo *</label>
+                            <input type="date" id="torneoFecha" name="fecha" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="torneoHora">Hora de Inicio</label>
+                            <input type="time" id="torneoHora" name="hora">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="torneoDescripcion">Descripción</label>
+                            <textarea id="torneoDescripcion" name="descripcion" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeTorneoFormModal()">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" id="torneoSubmitBtn">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Cuadro de Tenis -->
+        <div id="tennisBracketModal" class="modal" style="display: none;">
+            <div class="modal-content large-modal">
+                <div class="modal-header">
+                    <h2 id="bracketTitle">Cuadro de Tenis</h2>
+                    <button class="close-btn" onclick="closeTennisBracketModal()">&times;</button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="tennis-bracket-container" id="tennisBracketContainer">
+                        <!-- El cuadro de tenis se generará aquí dinámicamente -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -397,9 +577,1265 @@
     <script src="{{ url_for('static', filename='js/config.js') }}"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/torneos.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/usuarios.js') }}"></script>
     
     <script>
+        // Función para cambiar entre vistas
+        function showView(viewName, event) {
+            if (event) {
+                event.preventDefault();
+            }
+            
+            // Ocultar todas las vistas
+            document.querySelectorAll('.content-view').forEach(view => {
+                view.style.display = 'none';
+                view.classList.remove('active');
+            });
+            
+            // Mostrar la vista seleccionada
+            const targetView = document.getElementById(`view-${viewName}`);
+            if (targetView) {
+                targetView.style.display = 'block';
+                targetView.classList.add('active');
+            }
+            
+            // Actualizar navegación activa
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            const activeNav = document.querySelector(`[data-view="${viewName}"]`);
+            if (activeNav) {
+                activeNav.classList.add('active');
+            }
+            
+            // Cargar datos según la vista
+            console.log(`📍 Cargando vista: ${viewName}`);
+            
+            if (viewName === 'torneos' && typeof loadTorneos === 'function') {
+                console.log('🏆 Cargando torneos...');
+                loadTorneos();
+            } else if (viewName === 'usuarios') {
+                console.log('👥 Cargando usuarios...');
+                // Dar tiempo para que el DOM se actualice
+                setTimeout(() => {
+                    if (typeof loadUsuarios === 'function') {
+                        loadUsuarios();
+                    } else {
+                        console.error('❌ Función loadUsuarios no está definida');
+                        // Intentar cargar manualmente
+                        loadUsuariosManual();
+                    }
+                }, 100);
+            } else if (viewName === 'dashboard' && typeof loadDashboardStats === 'function') {
+                console.log('📊 Cargando dashboard...');
+                loadDashboardStats();
+            }
+        }
+        
+        // Función de respaldo para cargar usuarios
+        async function loadUsuariosManual() {
+            console.log('🔄 Cargando usuarios manualmente...');
+            try {
+                const token = localStorage.getItem('auth_token');
+                if (!token) {
+                    console.error('❌ No hay token de autenticación');
+                    return;
+                }
+                
+                const response = await fetch('/api/usuarios', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📥 Respuesta del servidor:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}`);
+                }
+                
+                const usuarios = await response.json();
+                console.log('✅ Usuarios obtenidos:', usuarios.length);
+                
+                renderUsuariosManual(usuarios);
+                
+            } catch (error) {
+                console.error('❌ Error cargando usuarios:', error);
+                const container = document.getElementById('usuariosList');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="error-state">
+                            <p>Error al cargar usuarios: ${error.message}</p>
+                            <button class="btn btn-primary" onclick="loadUsuariosManual()">
+                                Reintentar
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        // Función para renderizar usuarios manualmente
+        function renderUsuariosManual(usuarios) {
+            const container = document.getElementById('usuariosList');
+            
+            if (!container) {
+                console.error('❌ Contenedor usuariosList no encontrado');
+                return;
+            }
+            
+            if (usuarios.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No hay usuarios que mostrar</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = usuarios.map(usuario => `
+                <div class="usuario-card" data-id="${usuario.id}">
+                    <div class="usuario-avatar">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${usuario.username}" alt="${usuario.nombre}">
+                    </div>
+                    <div class="usuario-info">
+                        <h3>${usuario.nombre} ${usuario.apellido}</h3>
+                        <p class="usuario-email">${usuario.email}</p>
+                        <p class="usuario-username">@${usuario.username}</p>
+                        <div class="usuario-badges">
+                            <span class="badge badge-${usuario.perfil}">${usuario.perfil}</span>
+                            <span class="badge badge-${usuario.activo ? 'active' : 'inactive'}">
+                                ${usuario.activo ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="usuario-actions">
+                        <button class="btn btn-sm btn-primary" onclick="editUsuario(${usuario.id})" title="Editar">
+                            ✏️
+                        </button>
+                        <button class="btn btn-sm ${usuario.activo ? 'btn-warning' : 'btn-success'}" 
+                                onclick="toggleUsuarioStatus(${usuario.id}, ${!usuario.activo})" 
+                                title="${usuario.activo ? 'Desactivar' : 'Activar'}">
+                            ${usuario.activo ? '⏸️' : '▶️'}
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUsuario(${usuario.id})" title="Eliminar">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            console.log('✅ Usuarios renderizados exitosamente');
+        }
+        
+        // Función para editar usuario
+        window.editUsuario = function(usuarioId) {
+            console.log('Editando usuario:', usuarioId);
+            if (typeof openUsuarioForm === 'function') {
+                openUsuarioForm(usuarioId);
+            } else {
+                alert('Función de edición no disponible');
+            }
+        }
+        
+        // Función para toggle de estado
+        window.toggleUsuarioStatus = async function(usuarioId, newStatus) {
+            console.log(`Cambiando estado de usuario ${usuarioId} a ${newStatus}`);
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch(`/api/usuarios/${usuarioId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ activo: newStatus })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Error al cambiar estado');
+                }
+                
+                alert(`Usuario ${newStatus ? 'activado' : 'desactivado'} exitosamente`);
+                loadUsuariosManual();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cambiar estado del usuario');
+            }
+        }
+        
+        // Función para eliminar usuario
+        window.deleteUsuario = async function(usuarioId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
+                return;
+            }
+            
+            console.log('🗑️ Eliminando usuario:', usuarioId);
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                
+                if (!token) {
+                    alert('No hay sesión activa');
+                    return;
+                }
+                
+                const response = await fetch(`/api/usuarios/${usuarioId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📥 Respuesta de eliminación:', response.status);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Error ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Usuario eliminado:', result);
+                
+                alert('Usuario eliminado exitosamente');
+                loadUsuariosManual(); // Recargar lista
+                
+            } catch (error) {
+                console.error('❌ Error eliminando usuario:', error);
+                alert('Error al eliminar usuario: ' + error.message);
+            }
+        }
+        
+        // Función para abrir el formulario de usuario
+        window.openUsuarioForm = async function(usuarioId = null) {
+            console.log('Abriendo formulario de usuario:', usuarioId);
+            
+            const modal = document.getElementById('usuarioFormModal');
+            const form = document.getElementById('usuarioForm');
+            const title = document.getElementById('usuarioFormTitle');
+            const passwordGroup = document.getElementById('passwordGroup');
+            const passwordInput = document.getElementById('usuarioPassword');
+            
+            if (!modal || !form) {
+                console.error('❌ Modal de usuario no encontrado');
+                return;
+            }
+            
+            // Limpiar formulario
+            form.reset();
+            delete form.dataset.usuarioId;
+            
+            if (usuarioId) {
+                // Modo edición
+                title.textContent = 'Editar Usuario';
+                passwordGroup.style.display = 'none';
+                passwordInput.removeAttribute('required');
+                
+                // Cargar datos del usuario
+                try {
+                    const token = localStorage.getItem('auth_token');
+                    const response = await fetch(`/api/usuarios/${usuarioId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Error al cargar usuario');
+                    }
+                    
+                    const usuario = await response.json();
+                    console.log('✅ Datos del usuario:', usuario);
+                    
+                    // Llenar formulario con datos
+                    document.getElementById('usuarioNombre').value = usuario.nombre || '';
+                    document.getElementById('usuarioApellido').value = usuario.apellido || '';
+                    document.getElementById('usuarioEmail').value = usuario.email || '';
+                    document.getElementById('usuarioTelefono').value = usuario.telefono || '';
+                    document.getElementById('usuarioUsername').value = usuario.username || '';
+                    document.getElementById('usuarioPerfil').value = usuario.perfil || '';
+                    document.getElementById('usuarioActivo').checked = usuario.activo;
+                    
+                    // Guardar ID para actualización
+                    form.dataset.usuarioId = usuarioId;
+                    
+                } catch (error) {
+                    console.error('❌ Error cargando usuario:', error);
+                    alert('Error al cargar datos del usuario: ' + error.message);
+                    return;
+                }
+            } else {
+                // Modo creación
+                title.textContent = 'Crear Usuario';
+                passwordGroup.style.display = 'block';
+                passwordInput.setAttribute('required', 'required');
+            }
+            
+            modal.style.display = 'block';
+        }
+        
+        // Función para cerrar el formulario
+        window.closeUsuarioFormModal = function() {
+            const modal = document.getElementById('usuarioFormModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+            const form = document.getElementById('usuarioForm');
+            if (form) {
+                form.reset();
+                delete form.dataset.usuarioId;
+            }
+        }
+        
+        // Manejar submit del formulario de usuario
+        document.addEventListener('DOMContentLoaded', function() {
+            const usuarioForm = document.getElementById('usuarioForm');
+            if (usuarioForm) {
+                usuarioForm.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+                    
+                    const submitBtn = usuarioForm.querySelector('button[type="submit"]');
+                    const usuarioId = usuarioForm.dataset.usuarioId;
+                    
+                    // Obtener datos del formulario
+                    const formData = {
+                        nombre: document.getElementById('usuarioNombre').value.trim(),
+                        apellido: document.getElementById('usuarioApellido').value.trim(),
+                        email: document.getElementById('usuarioEmail').value.trim(),
+                        telefono: document.getElementById('usuarioTelefono').value.trim(),
+                        username: document.getElementById('usuarioUsername').value.trim(),
+                        perfil: document.getElementById('usuarioPerfil').value,
+                        activo: document.getElementById('usuarioActivo').checked
+                    };
+                    
+                    // Solo incluir password si es creación o si se cambió
+                    const password = document.getElementById('usuarioPassword').value;
+                    if (password) {
+                        formData.password = password;
+                    }
+                    
+                    console.log('📤 Enviando datos:', formData);
+                    
+                    // Validar datos
+                    if (!formData.nombre || !formData.apellido || !formData.email || !formData.username || !formData.perfil) {
+                        alert('Todos los campos obligatorios deben estar completos');
+                        return;
+                    }
+                    
+                    // Deshabilitar botón durante envío
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = usuarioId ? 'Actualizando...' : 'Creando...';
+                    
+                    try {
+                        const token = localStorage.getItem('auth_token');
+                        const url = usuarioId ? `/api/usuarios/${usuarioId}` : `/api/usuarios`;
+                        const method = usuarioId ? 'PUT' : 'POST';
+                        
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        console.log('📥 Respuesta:', response.status, response.statusText);
+                        
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || `Error ${response.status}`);
+                        }
+                        
+                        const result = await response.json();
+                        console.log('✅ Usuario guardado:', result);
+                        
+                        alert(usuarioId ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
+                        
+                        closeUsuarioFormModal();
+                        loadUsuariosManual(); // Recargar lista
+                        
+                    } catch (error) {
+                        console.error('❌ Error:', error);
+                        alert(`Error: ${error.message}`);
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Guardar';
+                    }
+                });
+            }
+        });
+        
+        // Función para eliminar usuario
+        window.deleteUsuario = async function(usuarioId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
+                return;
+            }
+            
+            console.log('🗑️ Eliminando usuario:', usuarioId);
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                
+                if (!token) {
+                    alert('No hay sesión activa');
+                    return;
+                }
+                
+                const response = await fetch(`/api/usuarios/${usuarioId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📥 Respuesta de eliminación:', response.status);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Error ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Usuario eliminado:', result);
+                
+                alert('Usuario eliminado exitosamente');
+                loadUsuariosManual(); // Recargar lista
+                
+            } catch (error) {
+                console.error('❌ Error eliminando usuario:', error);
+                alert('Error al eliminar usuario: ' + error.message);
+            }
+        }
+        
+        // Función para abrir el formulario de usuario
+        window.openUsuarioForm = async function(usuarioId = null) {
+            console.log('Abriendo formulario de usuario:', usuarioId);
+            
+            const modal = document.getElementById('usuarioFormModal');
+            const form = document.getElementById('usuarioForm');
+            const title = document.getElementById('usuarioFormTitle');
+            const passwordGroup = document.getElementById('passwordGroup');
+            const passwordInput = document.getElementById('usuarioPassword');
+            
+            if (!modal || !form) {
+                console.error('❌ Modal de usuario no encontrado');
+                return;
+            }
+            
+            // Limpiar formulario
+            form.reset();
+            delete form.dataset.usuarioId;
+            
+            if (usuarioId) {
+                // Modo edición
+                title.textContent = 'Editar Usuario';
+                passwordGroup.style.display = 'none';
+                passwordInput.removeAttribute('required');
+                
+                // Cargar datos del usuario
+                try {
+                    const token = localStorage.getItem('auth_token');
+                    const response = await fetch(`/api/usuarios/${usuarioId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Error al cargar usuario');
+                    }
+                    
+                    const usuario = await response.json();
+                    console.log('✅ Datos del usuario:', usuario);
+                    
+                    // Llenar formulario con datos
+                    document.getElementById('usuarioNombre').value = usuario.nombre || '';
+                    document.getElementById('usuarioApellido').value = usuario.apellido || '';
+                    document.getElementById('usuarioEmail').value = usuario.email || '';
+                    document.getElementById('usuarioTelefono').value = usuario.telefono || '';
+                    document.getElementById('usuarioUsername').value = usuario.username || '';
+                    document.getElementById('usuarioPerfil').value = usuario.perfil || '';
+                    document.getElementById('usuarioActivo').checked = usuario.activo;
+                    
+                    // Guardar ID para actualización
+                    form.dataset.usuarioId = usuarioId;
+                    
+                } catch (error) {
+                    console.error('❌ Error cargando usuario:', error);
+                    alert('Error al cargar datos del usuario: ' + error.message);
+                    return;
+                }
+            } else {
+                // Modo creación
+                title.textContent = 'Crear Usuario';
+                passwordGroup.style.display = 'block';
+                passwordInput.setAttribute('required', 'required');
+            }
+            
+            modal.style.display = 'block';
+        }
+        
+        // Función para cerrar el formulario
+        window.closeUsuarioFormModal = function() {
+            const modal = document.getElementById('usuarioFormModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+            const form = document.getElementById('usuarioForm');
+            if (form) {
+                form.reset();
+                delete form.dataset.usuarioId;
+            }
+        }
+        
+        // Manejar submit del formulario de usuario
+        document.addEventListener('DOMContentLoaded', function() {
+            const usuarioForm = document.getElementById('usuarioForm');
+            if (usuarioForm) {
+                usuarioForm.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+                    
+                    const submitBtn = usuarioForm.querySelector('button[type="submit"]');
+                    const usuarioId = usuarioForm.dataset.usuarioId;
+                    
+                    // Obtener datos del formulario
+                    const formData = {
+                        nombre: document.getElementById('usuarioNombre').value.trim(),
+                        apellido: document.getElementById('usuarioApellido').value.trim(),
+                        email: document.getElementById('usuarioEmail').value.trim(),
+                        telefono: document.getElementById('usuarioTelefono').value.trim(),
+                        username: document.getElementById('usuarioUsername').value.trim(),
+                        perfil: document.getElementById('usuarioPerfil').value,
+                        activo: document.getElementById('usuarioActivo').checked
+                    };
+                    
+                    // Solo incluir password si es creación o si se cambió
+                    const password = document.getElementById('usuarioPassword').value;
+                    if (password) {
+                        formData.password = password;
+                    }
+                    
+                    console.log('📤 Enviando datos:', formData);
+                    
+                    // Validar datos
+                    if (!formData.nombre || !formData.apellido || !formData.email || !formData.username || !formData.perfil) {
+                        alert('Todos los campos obligatorios deben estar completos');
+                        return;
+                    }
+                    
+                    // Deshabilitar botón durante envío
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = usuarioId ? 'Actualizando...' : 'Creando...';
+                    
+                    try {
+                        const token = localStorage.getItem('auth_token');
+                        const url = usuarioId ? `/api/usuarios/${usuarioId}` : `/api/usuarios`;
+                        const method = usuarioId ? 'PUT' : 'POST';
+                        
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        console.log('📥 Respuesta:', response.status, response.statusText);
+                        
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || `Error ${response.status}`);
+                        }
+                        
+                        const result = await response.json();
+                        console.log('✅ Usuario guardado:', result);
+                        
+                        alert(usuarioId ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
+                        
+                        closeUsuarioFormModal();
+                        loadUsuariosManual(); // Recargar lista
+                        
+                    } catch (error) {
+                        console.error('❌ Error:', error);
+                        alert(`Error: ${error.message}`);
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Guardar';
+                    }
+                });
+            }
+        });
+        
+        // Función para eliminar usuario
+        window.deleteUsuario = async function(usuarioId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
+                return;
+            }
+            
+            console.log('🗑️ Eliminando usuario:', usuarioId);
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                
+                if (!token) {
+                    alert('No hay sesión activa');
+                    return;
+                }
+                
+                const response = await fetch(`/api/usuarios/${usuarioId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📥 Respuesta de eliminación:', response.status);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Error ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Usuario eliminado:', result);
+                
+                alert('Usuario eliminado exitosamente');
+                loadUsuariosManual(); // Recargar lista
+                
+            } catch (error) {
+                console.error('❌ Error eliminando usuario:', error);
+                alert('Error al eliminar usuario: ' + error.message);
+            }
+        }
+        
+        // Función para abrir el formulario de usuario
+        window.openUsuarioForm = async function(usuarioId = null) {
+            console.log('Abriendo formulario de usuario:', usuarioId);
+            
+            const modal = document.getElementById('usuarioFormModal');
+            const form = document.getElementById('usuarioForm');
+            const title = document.getElementById('usuarioFormTitle');
+            const passwordGroup = document.getElementById('passwordGroup');
+            const passwordInput = document.getElementById('usuarioPassword');
+            
+            if (!modal || !form) {
+                console.error('❌ Modal de usuario no encontrado');
+                return;
+            }
+            
+            // Limpiar formulario
+            form.reset();
+            delete form.dataset.usuarioId;
+            
+            if (usuarioId) {
+                // Modo edición
+                title.textContent = 'Editar Usuario';
+                passwordGroup.style.display = 'none';
+                passwordInput.removeAttribute('required');
+                
+                // Cargar datos del usuario
+                try {
+                    const token = localStorage.getItem('auth_token');
+                    const response = await fetch(`/api/usuarios/${usuarioId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Error al cargar usuario');
+                    }
+                    
+                    const usuario = await response.json();
+                    console.log('✅ Datos del usuario:', usuario);
+                    
+                    // Llenar formulario con datos
+                    document.getElementById('usuarioNombre').value = usuario.nombre || '';
+                    document.getElementById('usuarioApellido').value = usuario.apellido || '';
+                    document.getElementById('usuarioEmail').value = usuario.email || '';
+                    document.getElementById('usuarioTelefono').value = usuario.telefono || '';
+                    document.getElementById('usuarioUsername').value = usuario.username || '';
+                    document.getElementById('usuarioPerfil').value = usuario.perfil || '';
+                    document.getElementById('usuarioActivo').checked = usuario.activo;
+                    
+                    // Guardar ID para actualización
+                    form.dataset.usuarioId = usuarioId;
+                    
+                } catch (error) {
+                    console.error('❌ Error cargando usuario:', error);
+                    alert('Error al cargar datos del usuario: ' + error.message);
+                    return;
+                }
+            } else {
+                // Modo creación
+                title.textContent = 'Crear Usuario';
+                passwordGroup.style.display = 'block';
+                passwordInput.setAttribute('required', 'required');
+            }
+            
+            modal.style.display = 'block';
+        }
+        
+        // Función para cerrar el formulario
+        window.closeUsuarioFormModal = function() {
+            const modal = document.getElementById('usuarioFormModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+            const form = document.getElementById('usuarioForm');
+            if (form) {
+                form.reset();
+                delete form.dataset.usuarioId;
+            }
+        }
+        
+        // Manejar submit del formulario de usuario
+        document.addEventListener('DOMContentLoaded', function() {
+            const usuarioForm = document.getElementById('usuarioForm');
+            if (usuarioForm) {
+                usuarioForm.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+                    
+                    const submitBtn = usuarioForm.querySelector('button[type="submit"]');
+                    const usuarioId = usuarioForm.dataset.usuarioId;
+                    
+                    // Obtener datos del formulario
+                    const formData = {
+                        nombre: document.getElementById('usuarioNombre').value.trim(),
+                        apellido: document.getElementById('usuarioApellido').value.trim(),
+                        email: document.getElementById('usuarioEmail').value.trim(),
+                        telefono: document.getElementById('usuarioTelefono').value.trim(),
+                        username: document.getElementById('usuarioUsername').value.trim(),
+                        perfil: document.getElementById('usuarioPerfil').value,
+                        activo: document.getElementById('usuarioActivo').checked
+                    };
+                    
+                    // Solo incluir password si es creación o si se cambió
+                    const password = document.getElementById('usuarioPassword').value;
+                    if (password) {
+                        formData.password = password;
+                    }
+                    
+                    console.log('📤 Enviando datos:', formData);
+                    
+                    // Validar datos
+                    if (!formData.nombre || !formData.apellido || !formData.email || !formData.username || !formData.perfil) {
+                        alert('Todos los campos obligatorios deben estar completos');
+                        return;
+                    }
+                    
+                    // Deshabilitar botón durante envío
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = usuarioId ? 'Actualizando...' : 'Creando...';
+                    
+                    try {
+                        const token = localStorage.getItem('auth_token');
+                        const url = usuarioId ? `/api/usuarios/${usuarioId}` : `/api/usuarios`;
+                        const method = usuarioId ? 'PUT' : 'POST';
+                        
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        console.log('📥 Respuesta:', response.status, response.statusText);
+                        
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || `Error ${response.status}`);
+                        }
+                        
+                        const result = await response.json();
+                        console.log('✅ Usuario guardado:', result);
+                        
+                        alert(usuarioId ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
+                        
+                        closeUsuarioFormModal();
+                        loadUsuariosManual(); // Recargar lista
+                        
+                    } catch (error) {
+                        console.error('❌ Error:', error);
+                        alert(`Error: ${error.message}`);
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Guardar';
+                    }
+                });
+            }
+        });
+        
+        // Función para eliminar usuario
+        window.deleteUsuario = async function(usuarioId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
+                return;
+            }
+            
+            console.log('🗑️ Eliminando usuario:', usuarioId);
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                
+                if (!token) {
+                    alert('No hay sesión activa');
+                    return;
+                }
+                
+                const response = await fetch(`/api/usuarios/${usuarioId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📥 Respuesta de eliminación:', response.status);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Error ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Usuario eliminado:', result);
+                
+                alert('Usuario eliminado exitosamente');
+                loadUsuariosManual(); // Recargar lista
+                
+            } catch (error) {
+                console.error('❌ Error eliminando usuario:', error);
+                alert('Error al eliminar usuario: ' + error.message);
+            }
+        }
+        
+        // Función para abrir el formulario de usuario
+        window.openUsuarioForm = async function(usuarioId = null) {
+            console.log('Abriendo formulario de usuario:', usuarioId);
+            
+            const modal = document.getElementById('usuarioFormModal');
+            const form = document.getElementById('usuarioForm');
+            const title = document.getElementById('usuarioFormTitle');
+            const passwordGroup = document.getElementById('passwordGroup');
+            const passwordInput = document.getElementById('usuarioPassword');
+            
+            if (!modal || !form) {
+                console.error('❌ Modal de usuario no encontrado');
+                return;
+            }
+            
+            // Limpiar formulario
+            form.reset();
+            delete form.dataset.usuarioId;
+            
+            if (usuarioId) {
+                // Modo edición
+                title.textContent = 'Editar Usuario';
+                passwordGroup.style.display = 'none';
+                passwordInput.removeAttribute('required');
+                
+                // Cargar datos del usuario
+                try {
+                    const token = localStorage.getItem('auth_token');
+                    const response = await fetch(`/api/usuarios/${usuarioId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Error al cargar usuario');
+                    }
+                    
+                    const usuario = await response.json();
+                    console.log('✅ Datos del usuario:', usuario);
+                    
+                    // Llenar formulario con datos
+                    document.getElementById('usuarioNombre').value = usuario.nombre || '';
+                    document.getElementById('usuarioApellido').value = usuario.apellido || '';
+                    document.getElementById('usuarioEmail').value = usuario.email || '';
+                    document.getElementById('usuarioTelefono').value = usuario.telefono || '';
+                    document.getElementById('usuarioUsername').value = usuario.username || '';
+                    document.getElementById('usuarioPerfil').value = usuario.perfil || '';
+                    document.getElementById('usuarioActivo').checked = usuario.activo;
+                    
+                    // Guardar ID para actualización
+                    form.dataset.usuarioId = usuarioId;
+                    
+                } catch (error) {
+                    console.error('❌ Error cargando usuario:', error);
+                    alert('Error al cargar datos del usuario: ' + error.message);
+                    return;
+                }
+            } else {
+                // Modo creación
+                title.textContent = 'Crear Usuario';
+                passwordGroup.style.display = 'block';
+                passwordInput.setAttribute('required', 'required');
+            }
+            
+            modal.style.display = 'block';
+        }
+        
+        // Función para cerrar el formulario
+        window.closeUsuarioFormModal = function() {
+            const modal = document.getElementById('usuarioFormModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+            const form = document.getElementById('usuarioForm');
+            if (form) {
+                form.reset();
+                delete form.dataset.usuarioId;
+            }
+        }
+        
+        // Manejar submit del formulario de usuario
+        document.addEventListener('DOMContentLoaded', function() {
+            const usuarioForm = document.getElementById('usuarioForm');
+            if (usuarioForm) {
+                usuarioForm.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+                    
+                    const submitBtn = usuarioForm.querySelector('button[type="submit"]');
+                    const usuarioId = usuarioForm.dataset.usuarioId;
+                    
+                    // Obtener datos del formulario
+                    const formData = {
+                        nombre: document.getElementById('usuarioNombre').value.trim(),
+                        apellido: document.getElementById('usuarioApellido').value.trim(),
+                        email: document.getElementById('usuarioEmail').value.trim(),
+                        telefono: document.getElementById('usuarioTelefono').value.trim(),
+                        username: document.getElementById('usuarioUsername').value.trim(),
+                        perfil: document.getElementById('usuarioPerfil').value,
+                        activo: document.getElementById('usuarioActivo').checked
+                    };
+                    
+                    // Solo incluir password si es creación o si se cambió
+                    const password = document.getElementById('usuarioPassword').value;
+                    if (password) {
+                        formData.password = password;
+                    }
+                    
+                    console.log('📤 Enviando datos:', formData);
+                    
+                    // Validar datos
+                    if (!formData.nombre || !formData.apellido || !formData.email || !formData.username || !formData.perfil) {
+                        alert('Todos los campos obligatorios deben estar completos');
+                        return;
+                    }
+                    
+                    // Deshabilitar botón durante envío
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = usuarioId ? 'Actualizando...' : 'Creando...';
+                    
+                    try {
+                        const token = localStorage.getItem('auth_token');
+                        const url = usuarioId ? `/api/usuarios/${usuarioId}` : `/api/usuarios`;
+                        const method = usuarioId ? 'PUT' : 'POST';
+                        
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        console.log('📥 Respuesta:', response.status, response.statusText);
+                        
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || `Error ${response.status}`);
+                        }
+                        
+                        const result = await response.json();
+                        console.log('✅ Usuario guardado:', result);
+                        
+                        alert(usuarioId ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
+                        
+                        closeUsuarioFormModal();
+                        loadUsuariosManual(); // Recargar lista
+                        
+                    } catch (error) {
+                        console.error('❌ Error:', error);
+                        alert(`Error: ${error.message}`);
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Guardar';
+                    }
+                });
+            }
+        });
+        
+        // Función para eliminar usuario
+        window.deleteUsuario = async function(usuarioId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
+                return;
+            }
+            
+            console.log('🗑️ Eliminando usuario:', usuarioId);
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                
+                if (!token) {
+                    alert('No hay sesión activa');
+                    return;
+                }
+                
+                const response = await fetch(`/api/usuarios/${usuarioId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📥 Respuesta de eliminación:', response.status);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Error ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Usuario eliminado:', result);
+                
+                alert('Usuario eliminado exitosamente');
+                loadUsuariosManual(); // Recargar lista
+                
+            } catch (error) {
+                console.error('❌ Error eliminando usuario:', error);
+                alert('Error al eliminar usuario: ' + error.message);
+            }
+        }
+        
+        // Función para abrir el formulario de usuario
+        window.openUsuarioForm = async function(usuarioId = null) {
+            console.log('Abriendo formulario de usuario:', usuarioId);
+            
+            const modal = document.getElementById('usuarioFormModal');
+            const form = document.getElementById('usuarioForm');
+            const title = document.getElementById('usuarioFormTitle');
+            const passwordGroup = document.getElementById('passwordGroup');
+            const passwordInput = document.getElementById('usuarioPassword');
+            
+            if (!modal || !form) {
+                console.error('❌ Modal de usuario no encontrado');
+                return;
+            }
+            
+            // Limpiar formulario
+            form.reset();
+            delete form.dataset.usuarioId;
+            
+            if (usuarioId) {
+                // Modo edición
+                title.textContent = 'Editar Usuario';
+                passwordGroup.style.display = 'none';
+                passwordInput.removeAttribute('required');
+                
+                // Cargar datos del usuario
+                try {
+                    const token = localStorage.getItem('auth_token');
+                    const response = await fetch(`/api/usuarios/${usuarioId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Error al cargar usuario');
+                    }
+                    
+                    const usuario = await response.json();
+                    console.log('✅ Datos del usuario:', usuario);
+                    
+                    // Llenar formulario con datos
+                    document.getElementById('usuarioNombre').value = usuario.nombre || '';
+                    document.getElementById('usuarioApellido').value = usuario.apellido || '';
+                    document.getElementById('usuarioEmail').value = usuario.email || '';
+                    document.getElementById('usuarioTelefono').value = usuario.telefono || '';
+                    document.getElementById('usuarioUsername').value = usuario.username || '';
+                    document.getElementById('usuarioPerfil').value = usuario.perfil || '';
+                    document.getElementById('usuarioActivo').checked = usuario.activo;
+                    
+                    // Guardar ID para actualización
+                    form.dataset.usuarioId = usuarioId;
+                    
+                } catch (error) {
+                    console.error('❌ Error cargando usuario:', error);
+                    alert('Error al cargar datos del usuario: ' + error.message);
+                    return;
+                }
+            } else {
+                // Modo creación
+                title.textContent = 'Crear Usuario';
+                passwordGroup.style.display = 'block';
+                passwordInput.setAttribute('required', 'required');
+            }
+            
+            modal.style.display = 'block';
+        }
+        
+        // Función para cerrar el formulario
+        window.closeUsuarioFormModal = function() {
+            const modal = document.getElementById('usuarioFormModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+            const form = document.getElementById('usuarioForm');
+            if (form) {
+                form.reset();
+                delete form.dataset.usuarioId;
+            }
+        }
+        
+        // Manejar submit del formulario de usuario
+        document.addEventListener('DOMContentLoaded', function() {
+            const usuarioForm = document.getElementById('usuarioForm');
+            if (usuarioForm) {
+                usuarioForm.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+                    
+                    const submitBtn = usuarioForm.querySelector('button[type="submit"]');
+                    const usuarioId = usuarioForm.dataset.usuarioId;
+                    
+                    // Obtener datos del formulario
+                    const formData = {
+                        nombre: document.getElementById('usuarioNombre').value.trim(),
+                        apellido: document.getElementById('usuarioApellido').value.trim(),
+                        email: document.getElementById('usuarioEmail').value.trim(),
+                        telefono: document.getElementById('usuarioTelefono').value.trim(),
+                        username: document.getElementById('usuarioUsername').value.trim(),
+                        perfil: document.getElementById('usuarioPerfil').value,
+                        activo: document.getElementById('usuarioActivo').checked
+                    };
+                    
+                    // Solo incluir password si es creación o si se cambió
+                    const password = document.getElementById('usuarioPassword').value;
+                    if (password) {
+                        formData.password = password;
+                    }
+                    
+                    console.log('📤 Enviando datos:', formData);
+                    
+                    // Validar datos
+                    if (!formData.nombre || !formData.apellido || !formData.email || !formData.username || !formData.perfil) {
+                        alert('Todos los campos obligatorios deben estar completos');
+                        return;
+                    }
+                    
+                    // Deshabilitar botón durante envío
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = usuarioId ? 'Actualizando...' : 'Creando...';
+                    
+                    try {
+                        const token = localStorage.getItem('auth_token');
+                        const url = usuarioId ? `/api/usuarios/${usuarioId}` : `/api/usuarios`;
+                        const method = usuarioId ? 'PUT' : 'POST';
+                        
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        console.log('📥 Respuesta:', response.status, response.statusText);
+                        
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || `Error ${response.status}`);
+                        }
+                        
+                        const result = await response.json();
+                        console.log('✅ Usuario guardado:', result);
+                        
+                        alert(usuarioId ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
+                        
+                        closeUsuarioFormModal();
+                        loadUsuariosManual(); // Recargar lista
+                        
+                    } catch (error) {
+                        console.error('❌ Error:', error);
+                        alert(`Error: ${error.message}`);
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Guardar';
+                    }
+                });
+            }
+        });
+        
+        // Función para eliminar usuario
+        window.deleteUsuario = async function(usuarioId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
+                return;
+            }
+            
+            console.log('🗑️ Eliminando usuario:', usuarioId);
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                
+                if (!token) {
+                    alert('No hay sesión activa');
+                    return;
+                }
+                
+                const response = await fetch(`/api/usuarios/${usuarioId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📥 Respuesta de eliminación:', response.status);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Error ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Usuario eliminado:', result);
+                
+                alert('Usuario eliminado exitosamente');
+                loadUsuariosManual(); // Recargar lista
+                
+            } catch (error) {
+                console.error('❌ Error eliminando usuario:', error);
+                alert('Error al eliminar usuario: ' + error.message);
+            }
+        }
+        
         // Manejar logout
         document.getElementById('logoutBtn').addEventListener('click', function(e) {
             e.preventDefault();
@@ -412,179 +1848,6 @@
             if (user) {
                 document.getElementById('userName').textContent = `${user.nombre} ${user.apellido}`;
                 document.getElementById('userEmail').textContent = user.email;
-                document.getElementById('userRole').textContent = user.perfil;
-            }
-        });
-
-        // Variables globales para gestión de usuarios
-        let currentEditingUserId = null;
-
-        // Funciones para manejar el modal de usuarios
-        function openUsuariosModal() {
-            document.getElementById('usuariosModal').style.display = 'flex';
-            loadUsuarios();
-        }
-
-        function closeUsuariosModal() {
-            document.getElementById('usuariosModal').style.display = 'none';
-        }
-
-        function openCreateUsuarioForm() {
-            currentEditingUserId = null;
-            document.getElementById('usuarioFormTitle').textContent = 'Crear Usuario';
-            document.getElementById('usuarioForm').reset();
-            document.getElementById('usuarioPassword').required = true;
-            document.getElementById('usuarioFormModal').style.display = 'flex';
-        }
-
-        function closeUsuarioFormModal() {
-            document.getElementById('usuarioFormModal').style.display = 'none';
-            currentEditingUserId = null;
-        }
-
-        function openEditUsuarioForm(usuario) {
-            currentEditingUserId = usuario.id;
-            document.getElementById('usuarioFormTitle').textContent = 'Editar Usuario';
-            
-            // Llenar el formulario con los datos del usuario
-            document.getElementById('usuarioNombre').value = usuario.nombre;
-            document.getElementById('usuarioApellido').value = usuario.apellido;
-            document.getElementById('usuarioEmail').value = usuario.email;
-            document.getElementById('usuarioTelefono').value = usuario.telefono || '';
-            document.getElementById('usuarioUsername').value = usuario.username;
-            document.getElementById('usuarioPerfil').value = usuario.perfil;
-            
-            // La contraseña no es requerida para edición
-            document.getElementById('usuarioPassword').required = false;
-            document.getElementById('usuarioPassword').placeholder = 'Dejar vacío para mantener la contraseña actual';
-            
-            document.getElementById('usuarioFormModal').style.display = 'flex';
-        }
-
-        // Cargar lista de usuarios
-        async function loadUsuarios() {
-            const usuariosList = document.getElementById('usuariosList');
-            usuariosList.innerHTML = '<div class="loading">Cargando usuarios...</div>';
-            
-            try {
-                const usuarios = await api.getUsuarios();
-                renderUsuarios(usuarios);
-            } catch (error) {
-                usuariosList.innerHTML = `<div class="error">Error al cargar usuarios: ${error.message}</div>`;
-            }
-        }
-
-        // Renderizar lista de usuarios
-        function renderUsuarios(usuarios) {
-            const usuariosList = document.getElementById('usuariosList');
-            
-            if (usuarios.length === 0) {
-                usuariosList.innerHTML = '<div class="loading">No hay usuarios registrados</div>';
-                return;
-            }
-
-            usuariosList.innerHTML = usuarios.map(usuario => `
-                <div class="usuario-item">
-                    <div class="usuario-info">
-                        <div class="usuario-name">${usuario.nombre} ${usuario.apellido}</div>
-                        <div class="usuario-details">
-                            <strong>Email:</strong> ${usuario.email} | 
-                            <strong>Username:</strong> ${usuario.username} | 
-                            <strong>Perfil:</strong> ${usuario.perfil} | 
-                            <strong>Estado:</strong> ${usuario.activo ? 'Activo' : 'Inactivo'}
-                        </div>
-                    </div>
-                    <div class="usuario-actions">
-                        <button class="btn-icon btn-edit" onclick="openEditUsuarioForm(${JSON.stringify(usuario).replace(/"/g, '&quot;')})" title="Editar">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                        </button>
-                        <button class="btn-icon btn-delete" onclick="deleteUsuario(${usuario.id})" title="Eliminar">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="3,6 5,6 21,6"></polyline>
-                                <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Eliminar usuario
-        async function deleteUsuario(usuarioId) {
-            if (!confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
-                return;
-            }
-
-            try {
-                await api.deleteUsuario(usuarioId);
-                loadUsuarios(); // Recargar la lista
-                alert('Usuario eliminado exitosamente');
-            } catch (error) {
-                alert(`Error al eliminar usuario: ${error.message}`);
-            }
-        }
-
-        // Manejar envío del formulario de usuario
-        document.getElementById('usuarioForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const usuarioData = {
-                nombre: formData.get('nombre'),
-                apellido: formData.get('apellido'),
-                email: formData.get('email'),
-                telefono: formData.get('telefono'),
-                username: formData.get('username'),
-                perfil: formData.get('perfil')
-            };
-
-            // Solo incluir contraseña si se proporcionó
-            const password = formData.get('password');
-            if (password && password.trim() !== '') {
-                usuarioData.password = password;
-            }
-
-            try {
-                if (currentEditingUserId) {
-                    // Actualizar usuario existente
-                    await api.updateUsuario(currentEditingUserId, usuarioData);
-                    alert('Usuario actualizado exitosamente');
-                } else {
-                    // Crear nuevo usuario
-                    await api.createUsuario(usuarioData);
-                    alert('Usuario creado exitosamente');
-                }
                 
-                closeUsuarioFormModal();
-                loadUsuarios(); // Recargar la lista
-            } catch (error) {
-                alert(`Error: ${error.message}`);
-            }
-        });
-
-        // Cerrar modales al hacer clic fuera de ellos
-        window.addEventListener('click', function(e) {
-            const usuariosModal = document.getElementById('usuariosModal');
-            const usuarioFormModal = document.getElementById('usuarioFormModal');
-            
-            if (e.target === usuariosModal) {
-                closeUsuariosModal();
-            }
-            if (e.target === usuarioFormModal) {
-                closeUsuarioFormModal();
-            }
-        });
-
-        // Función para navegar a torneos
-        function navigateToTorneos(event) {
-            event.preventDefault();
-            // Limpiar URL y navegar
-            history.replaceState(null, null, '/');
-            window.location.href = '/torneos';
-        }
-    </script>
-</body>
-</html>
+                const userBadge = document.getElementById('userBadge');
+                if

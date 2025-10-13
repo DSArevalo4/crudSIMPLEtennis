@@ -1,9 +1,14 @@
 # controllers/inscripcion_controller.py
 from flask import Blueprint, request, jsonify
-from services.inscripcion_service import InscripcionService
+from flask_jwt_extended import get_jwt_identity
 from config.database import get_db_session
+from middleware.auth_middleware import require_auth  # Corregido
+from models.inscripcion_model import Inscripcion
+from models.torneo_model import Torneo
+from models.usuario_model import Usuario
+import traceback
 
-inscripcion_bp = Blueprint('inscripcion_bp', __name__)
+inscripcion_bp = Blueprint('inscripcion', __name__)
 
 @inscripcion_bp.route('/inscripciones', methods=['GET'])
 def get_inscripciones():
