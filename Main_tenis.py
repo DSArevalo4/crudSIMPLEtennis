@@ -58,8 +58,8 @@ app.register_blueprint(notificacion_bp, url_prefix='/api')
 # Rutas del Dashboard
 @app.route('/')
 def index():
-    """Página principal - mostrar dashboard por defecto"""
-    return render_template('dashboard.html')
+    """Página principal - mostrar login por defecto"""
+    return render_template('login.html')
 
 @app.route('/login')
 def login():

@@ -25,6 +25,13 @@ class UsuarioService:
 
     def obtener_usuario_por_email(self, email):
         return self.db.query(Usuario).filter(Usuario.email == email).first()
+    
+    def obtener_usuario_por_username(self, username):
+        return self.db.query(Usuario).filter(Usuario.username == username).first()
+    
+    def obtener_todos_usuarios(self):
+        """Obtener todos los usuarios incluyendo inactivos"""
+        return self.db.query(Usuario).all()
 
     def crear_usuario(self, data, usuario_creador_id, usuario_creador_perfil):
         """
@@ -37,29 +44,27 @@ class UsuarioService:
         # Validar que el email no existe
         if self.obtener_usuario_por_email(data['email']):
             raise ValueError("Ya existe un usuario con este email")
+        
+        # Validar que el username no existe
+        if self.obtener_usuario_por_username(data['username']):
+            raise ValueError("Ya existe un usuario con este username")
 
         # Validar perfil
         if data['perfil'] not in ['deportista', 'profesor', 'administrador']:
             raise ValueError("Perfil de usuario inválido")
-
-        # Validar que el username no existe
-        if 'username' in data and data['username']:
-            existing_user = self.db.query(Usuario).filter(Usuario.username == data['username']).first()
-            if existing_user:
-                raise ValueError("Ya existe un usuario con este username")
 
         usuario = Usuario(
             nombre=data['nombre'],
             apellido=data['apellido'],
             email=data['email'],
             telefono=data.get('telefono'),
-            username=data.get('username'),
-            perfil=data['perfil']
+            username=data['username'],
+            perfil=data['perfil'],
+            activo=data.get('activo', True)
         )
-
-        # Establecer contraseña si se proporciona
-        if 'password' in data and data['password']:
-            usuario.set_password(data['password'])
+        
+        # Establecer contraseña
+        usuario.set_password(data['password'])
 
         self.db.add(usuario)
         self.db.commit()
@@ -89,11 +94,7 @@ class UsuarioService:
         if 'telefono' in data:
             usuario.telefono = data['telefono']
         
-        # Actualizar contraseña si se proporciona
-        if 'password' in data and data['password']:
-            usuario.set_password(data['password'])
-        
-        # Solo administradores pueden cambiar email, username y perfil
+        # Solo administradores pueden cambiar email, username, perfil y estado
         if usuario_actualizador_perfil == 'administrador':
             if 'email' in data:
                 # Verificar que el nuevo email no existe
@@ -105,8 +106,7 @@ class UsuarioService:
             if 'username' in data:
                 # Verificar que el nuevo username no existe
                 if data['username'] != usuario.username:
-                    existing_user = self.db.query(Usuario).filter(Usuario.username == data['username']).first()
-                    if existing_user:
+                    if self.obtener_usuario_por_username(data['username']):
                         raise ValueError("Ya existe un usuario con este username")
                     usuario.username = data['username']
             
@@ -117,8 +117,13 @@ class UsuarioService:
             
             if 'activo' in data:
                 usuario.activo = data['activo']
+        
+        # Actualizar contraseña si se proporciona
+        if 'password' in data and data['password']:
+            usuario.set_password(data['password'])
 
         self.db.commit()
+        self.db.refresh(usuario)
         return usuario
 
     def eliminar_usuario(self, usuario_id, usuario_eliminador_id, usuario_eliminador_perfil):
@@ -156,4 +161,5 @@ class UsuarioService:
 
         usuario.activo = True
         self.db.commit()
+        self.db.refresh(usuario)
         return usuario

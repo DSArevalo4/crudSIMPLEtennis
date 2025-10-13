@@ -6,17 +6,25 @@ document.addEventListener('DOMContentLoaded', function() {
   const registerBtn = document.getElementById('registerBtn')
   const toggleLoginBtn = document.getElementById('toggleLogin')
   const toggleRegisterBtn = document.getElementById('toggleRegister')
+  const toggleToLogin = document.getElementById('toggleToLogin')
+  const toggleToRegister = document.getElementById('toggleToRegister')
   const errorMessage = document.getElementById('errorMessage')
   const successMessage = document.getElementById('successMessage')
+  const regErrorMessage = document.getElementById('regErrorMessage')
+  const regSuccessMessage = document.getElementById('regSuccessMessage')
 
   // Toggle between login and register forms
   function toggleForms(showLogin) {
     if (showLogin) {
       loginForm.classList.add('active')
       registerForm.classList.remove('active')
+      toggleToRegister.style.display = 'block'
+      toggleToLogin.style.display = 'none'
     } else {
       loginForm.classList.remove('active')
       registerForm.classList.add('active')
+      toggleToRegister.style.display = 'none'
+      toggleToLogin.style.display = 'block'
     }
     clearMessages()
   }
@@ -24,19 +32,23 @@ document.addEventListener('DOMContentLoaded', function() {
   function clearMessages() {
     if (errorMessage) errorMessage.style.display = 'none'
     if (successMessage) successMessage.style.display = 'none'
+    if (regErrorMessage) regErrorMessage.style.display = 'none'
+    if (regSuccessMessage) regSuccessMessage.style.display = 'none'
   }
 
-  function showError(message) {
-    if (errorMessage) {
-      errorMessage.textContent = message
-      errorMessage.style.display = 'block'
+  function showError(message, isRegister = false) {
+    const msgElement = isRegister ? regErrorMessage : errorMessage
+    if (msgElement) {
+      msgElement.textContent = message
+      msgElement.style.display = 'block'
     }
   }
 
-  function showSuccess(message) {
-    if (successMessage) {
-      successMessage.textContent = message
-      successMessage.style.display = 'block'
+  function showSuccess(message, isRegister = false) {
+    const msgElement = isRegister ? regSuccessMessage : successMessage
+    if (msgElement) {
+      msgElement.textContent = message
+      msgElement.style.display = 'block'
     }
   }
 
@@ -77,7 +89,10 @@ document.addEventListener('DOMContentLoaded', function() {
           auth.setAuth(response.token, response.user)
           showSuccess('Inicio de sesión exitoso')
           
-          // La redirección se maneja automáticamente en setAuth
+          // Redirect to dashboard after short delay
+          setTimeout(() => {
+            window.location.href = '/dashboard'
+          }, 1000)
         } else {
           showError('Credenciales inválidas')
         }
@@ -95,14 +110,13 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault()
       clearMessages()
 
-      const formData = new FormData(registerForm)
       const userData = {
-        nombre: formData.get('nombre'),
-        apellido: formData.get('apellido'),
-        email: formData.get('email'),
-        telefono: formData.get('telefono'),
-        username: formData.get('username'),
-        password: formData.get('password'),
+        nombre: document.getElementById('regNombre').value,
+        apellido: document.getElementById('regApellido').value,
+        email: document.getElementById('regEmail').value,
+        telefono: document.getElementById('regTelefono').value,
+        username: document.getElementById('regUsername').value,
+        password: document.getElementById('regPassword').value,
         perfil: 'deportista' // Solo deportistas pueden registrarse
       }
 
@@ -111,13 +125,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const missingFields = requiredFields.filter(field => !userData[field])
       
       if (missingFields.length > 0) {
-        showError('Por favor completa todos los campos obligatorios')
+        showError('Por favor completa todos los campos obligatorios', true)
         return
       }
 
       // Validate password confirmation
-      if (userData.password !== formData.get('confirmPassword')) {
-        showError('Las contraseñas no coinciden')
+      const confirmPassword = document.getElementById('confirmPassword').value
+      if (userData.password !== confirmPassword) {
+        showError('Las contraseñas no coinciden', true)
         return
       }
 
@@ -125,18 +140,18 @@ document.addEventListener('DOMContentLoaded', function() {
         setLoading(registerBtn, true)
         const response = await api.register(userData)
         
-        if (response.message) {
-          showSuccess('Usuario registrado exitosamente. Ahora puedes iniciar sesión.')
+        if (response.message || response.id) {
+          showSuccess('Usuario registrado exitosamente. Ahora puedes iniciar sesión.', true)
           // Switch to login form after successful registration
           setTimeout(() => {
             toggleForms(true)
             document.getElementById('email').value = userData.email
           }, 2000)
         } else {
-          showError('Error al registrar usuario')
+          showError('Error al registrar usuario', true)
         }
       } catch (error) {
-        showError(error.message || 'Error al registrar usuario')
+        showError(error.message || 'Error al registrar usuario', true)
       } finally {
         setLoading(registerBtn, false)
       }

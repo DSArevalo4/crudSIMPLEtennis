@@ -3,17 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Sistema de Torneos</title>
+    <title>Dashboard - Sistema de Tenis</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="{{ url_for('static', filename='js/config.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/url-manager.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/torneos.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usuarios.css') }}">
 </head>
 <body>
     <script>
         // Verificar autenticación antes de mostrar el dashboard
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Inicializando...');
+            
+            // Verificar autenticación PRIMERO
+            if (!auth.isAuthenticated()) {
+                console.log('❌ No autenticado, redirigiendo a login...');
+                window.location.href = '/login';
+                return;
+            }
+            
+            console.log('✅ Usuario autenticado');
+            
             // Limpiar URL inmediatamente para evitar parpadeo
             if (window.location.pathname === '/dashboard') {
                 history.replaceState(null, null, '/');
@@ -348,11 +357,17 @@
             <!-- Vista Inscripciones -->
             <div id="view-inscripciones" class="content-view" style="display: none;">
                 <header class="page-header">
-                    <h1>Inscripciones</h1>
-                    <p class="subtitle">Gestión de Inscripciones</p>
+                    <div class="header-left">
+                        <h1>Inscripciones</h1>
+                        <p class="subtitle">Gestión de Inscripciones a Torneos</p>
+                    </div>
                 </header>
-                <div class="content-placeholder">
-                    <p>Vista de inscripciones en construcción...</p>
+
+                <!-- Lista de torneos para inscripciones -->
+                <div class="torneos-container">
+                    <div class="torneos-list" id="torneosInscripcionList">
+                        <div class="loading">Cargando torneos...</div>
+                    </div>
                 </div>
             </div>
 
@@ -572,20 +587,65 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal de Inscripción -->
+        <div id="inscripcionFormModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="inscripcionFormTitle">Nueva Inscripción</h2>
+                    <button class="close-btn" onclick="closeInscripcionFormModal()">&times;</button>
+                </div>
+                
+                <div class="modal-body">
+                    <form id="inscripcionForm">
+                        <div class="form-group">
+                            <label for="inscripcionTorneo">Torneo *</label>
+                            <select id="inscripcionTorneo" name="torneo_id" required>
+                                <option value="">Seleccionar torneo</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="deportistaSelectGroup">
+                            <label for="inscripcionDeportista">Deportista *</label>
+                            <select id="inscripcionDeportista" name="deportista_id" required>
+                                <option value="">Seleccionar deportista</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeInscripcionFormModal()">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" id="inscripcionSubmitBtn">Inscribir</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- IMPORTANTE: Cargar scripts ANTES de definir funciones -->
     <script src="{{ url_for('static', filename='js/config.js') }}"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
     <script src="{{ url_for('static', filename='js/torneos.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/usuarios.js') }}"></script>
     
     <script>
-        // Función para cambiar entre vistas
-        function showView(viewName, event) {
+        // Verificar autenticación ANTES de cargar el DOM
+        console.log('🔐 Verificando autenticación...');
+        
+        if (!auth.isAuthenticated()) {
+            console.log('❌ No autenticado, redirigiendo...');
+            window.location.href = '/login';
+        } else {
+            console.log('✅ Usuario autenticado');
+        }
+        
+        // Función para cambiar entre vistas - GLOBAL
+        window.showView = function(viewName, event) {
             if (event) {
                 event.preventDefault();
             }
+            
+            console.log(`📍 Cambiando a vista: ${viewName}`);
             
             // Ocultar todas las vistas
             document.querySelectorAll('.content-view').forEach(view => {
@@ -610,66 +670,79 @@
                 activeNav.classList.add('active');
             }
             
-            // Cargar datos según la vista
-            console.log(`📍 Cargando vista: ${viewName}`);
-            
-            if (viewName === 'torneos' && typeof loadTorneos === 'function') {
-                console.log('🏆 Cargando torneos...');
-                loadTorneos();
-            } else if (viewName === 'usuarios') {
-                console.log('👥 Cargando usuarios...');
-                // Dar tiempo para que el DOM se actualice
-                setTimeout(() => {
-                    if (typeof loadUsuarios === 'function') {
-                        loadUsuarios();
+            // Cargar datos según la vista con timeout
+            setTimeout(() => {
+                console.log(`🔄 Ejecutando carga para vista: ${viewName}`);
+                
+                if (viewName === 'torneos') {
+                    console.log('🏆 Intentando cargar torneos...');
+                    if (typeof loadTorneos === 'function') {
+                        loadTorneos();
                     } else {
-                        console.error('❌ Función loadUsuarios no está definida');
-                        // Intentar cargar manualmente
-                        loadUsuariosManual();
+                        console.error('❌ loadTorneos no está definida');
                     }
-                }, 100);
-            } else if (viewName === 'dashboard' && typeof loadDashboardStats === 'function') {
-                console.log('📊 Cargando dashboard...');
-                loadDashboardStats();
-            }
+                } else if (viewName === 'usuarios') {
+                    console.log('👥 Intentando cargar usuarios...');
+                    loadUsuariosManual();
+                } else if (viewName === 'inscripciones') {
+                    console.log('📝 Intentando cargar inscripciones...');
+                    if (typeof loadInscripciones === 'function') {
+                        console.log('✅ loadInscripciones está definida, ejecutando...');
+                        loadInscripciones();
+                    } else {
+                        console.error('❌ loadInscripciones no está definida');
+                        // Intentar cargar manualmente
+                        loadInscripcionesManual();
+                    }
+                } else if (viewName === 'dashboard') {
+                    console.log('📊 Intentando cargar dashboard...');
+                    if (typeof loadDashboardStats === 'function') {
+                        loadDashboardStats();
+                    }
+                }
+            }, 150);
         }
         
-        // Función de respaldo para cargar usuarios
-        async function loadUsuariosManual() {
-            console.log('🔄 Cargando usuarios manualmente...');
+        // Función de respaldo para cargar inscripciones manualmente
+        window.loadInscripcionesManual = async function() {
+            console.log('🔄 Cargando torneos para inscripciones (respaldo)...');
+            
             try {
                 const token = localStorage.getItem('auth_token');
                 if (!token) {
-                    console.error('❌ No hay token de autenticación');
+                    console.error('❌ No hay token');
                     return;
                 }
                 
-                const response = await fetch('/api/usuarios', {
+                console.log('📡 Haciendo petición a /api/torneos...');
+                
+                const response = await fetch('/api/torneos', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     }
                 });
                 
-                console.log('📥 Respuesta del servidor:', response.status);
+                console.log('📥 Respuesta recibida:', response.status);
                 
                 if (!response.ok) {
                     throw new Error(`Error ${response.status}`);
                 }
                 
-                const usuarios = await response.json();
-                console.log('✅ Usuarios obtenidos:', usuarios.length);
+                const torneos = await response.json();
+                console.log('✅ Torneos obtenidos:', torneos.length);
                 
-                renderUsuariosManual(usuarios);
+                // Renderizar torneos
+                renderTorneosInscripcionManual(torneos);
                 
             } catch (error) {
-                console.error('❌ Error cargando usuarios:', error);
-                const container = document.getElementById('usuariosList');
+                console.error('❌ Error cargando torneos:', error);
+                const container = document.getElementById('torneosInscripcionList');
                 if (container) {
                     container.innerHTML = `
                         <div class="error-state">
-                            <p>Error al cargar usuarios: ${error.message}</p>
-                            <button class="btn btn-primary" onclick="loadUsuariosManual()">
+                            <p>Error al cargar torneos: ${error.message}</p>
+                            <button class="btn btn-primary" onclick="loadInscripcionesManual()">
                                 Reintentar
                             </button>
                         </div>
@@ -678,1176 +751,194 @@
             }
         }
         
-        // Función para renderizar usuarios manualmente
-        function renderUsuariosManual(usuarios) {
-            const container = document.getElementById('usuariosList');
+        // Función para renderizar torneos en vista de inscripciones
+        function renderTorneosInscripcionManual(torneos) {
+            const container = document.getElementById('torneosInscripcionList');
             
             if (!container) {
-                console.error('❌ Contenedor usuariosList no encontrado');
+                console.error('❌ Contenedor torneosInscripcionList no encontrado');
                 return;
             }
             
-            if (usuarios.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <p>No hay usuarios que mostrar</p>
-                    </div>
-                `;
+            if (torneos.length === 0) {
+                container.innerHTML = `<div class="empty-state"><p>No hay torneos disponibles</p></div>`;
                 return;
             }
             
-            container.innerHTML = usuarios.map(usuario => `
-                <div class="usuario-card" data-id="${usuario.id}">
-                    <div class="usuario-avatar">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${usuario.username}" alt="${usuario.nombre}">
+            const user = auth.getUser();
+            const isDeportista = user && user.perfil === 'deportista';
+            
+            container.innerHTML = torneos.map(torneo => `
+                <div class="torneo-card">
+                    <div class="torneo-header">
+                        <h3>${torneo.nombre}</h3>
+                        <span class="torneo-status status-${torneo.estado}">${torneo.estado}</span>
                     </div>
-                    <div class="usuario-info">
-                        <h3>${usuario.nombre} ${usuario.apellido}</h3>
-                        <p class="usuario-email">${usuario.email}</p>
-                        <p class="usuario-username">@${usuario.username}</p>
-                        <div class="usuario-badges">
-                            <span class="badge badge-${usuario.perfil}">${usuario.perfil}</span>
-                            <span class="badge badge-${usuario.activo ? 'active' : 'inactive'}">
-                                ${usuario.activo ? 'Activo' : 'Inactivo'}
-                            </span>
+                    <div class="torneo-body">
+                        <div class="torneo-info">
+                            <div class="info-item">
+                                <span>📅 ${formatDateSimple(torneo.fecha || torneo.fecha_inicio)}</span>
+                            </div>
+                            <div class="info-item">
+                                <span>🎾 ${torneo.superficie || 'No especificada'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span>👥 ${torneo.inscripciones_count || 0}/${torneo.max_participantes || 32} inscritos</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="usuario-actions">
-                        <button class="btn btn-sm btn-primary" onclick="editUsuario(${usuario.id})" title="Editar">
-                            ✏️
-                        </button>
-                        <button class="btn btn-sm ${usuario.activo ? 'btn-warning' : 'btn-success'}" 
-                                onclick="toggleUsuarioStatus(${usuario.id}, ${!usuario.activo})" 
-                                title="${usuario.activo ? 'Desactivar' : 'Activar'}">
-                            ${usuario.activo ? '⏸️' : '▶️'}
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteUsuario(${usuario.id})" title="Eliminar">
-                            🗑️
+                    <div class="torneo-actions">
+                        <button class="btn btn-sm ${isDeportista ? 'btn-primary' : 'btn-success'}" 
+                                onclick="openInscripcionModalManual(${torneo.id})"
+                                style="${isDeportista ? 'width: 100%;' : ''}">
+                            ${isDeportista ? '✓ Inscribirme' : '👥 Gestionar Inscripciones'}
                         </button>
                     </div>
                 </div>
             `).join('');
             
-            console.log('✅ Usuarios renderizados exitosamente');
+            console.log('✅ Torneos renderizados para inscripciones');
         }
         
-        // Función para editar usuario
-        window.editUsuario = function(usuarioId) {
-            console.log('Editando usuario:', usuarioId);
-            if (typeof openUsuarioForm === 'function') {
-                openUsuarioForm(usuarioId);
+        // Función para abrir modal de inscripción
+        window.openInscripcionModalManual = async function(torneoId) {
+            const user = auth.getUser();
+            
+            if (user.perfil === 'deportista') {
+                if (confirm('¿Deseas inscribirte en este torneo?')) {
+                    await inscribirDeportistaManual(torneoId, user.id);
+                }
+                return;
+            }
+            
+            // Para profesores y admin, abrir modal
+            if (typeof openInscripcionModal === 'function') {
+                openInscripcionModal(torneoId);
             } else {
-                alert('Función de edición no disponible');
+                alert('Funcionalidad en desarrollo');
             }
         }
         
-        // Función para toggle de estado
-        window.toggleUsuarioStatus = async function(usuarioId, newStatus) {
-            console.log(`Cambiando estado de usuario ${usuarioId} a ${newStatus}`);
+        // Función para inscribir deportista
+        async function inscribirDeportistaManual(torneoId, deportistaId) {
             try {
                 const token = localStorage.getItem('auth_token');
-                const response = await fetch(`/api/usuarios/${usuarioId}`, {
-                    method: 'PUT',
+                const response = await fetch('/api/inscripciones', {
+                    method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ activo: newStatus })
+                    body: JSON.stringify({
+                        torneo_id: parseInt(torneoId),
+                        deportista_id: parseInt(deportistaId)
+                    })
                 });
-                
-                if (!response.ok) {
-                    throw new Error('Error al cambiar estado');
-                }
-                
-                alert(`Usuario ${newStatus ? 'activado' : 'desactivado'} exitosamente`);
-                loadUsuariosManual();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al cambiar estado del usuario');
-            }
-        }
-        
-        // Función para eliminar usuario
-        window.deleteUsuario = async function(usuarioId) {
-            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
-                return;
-            }
-            
-            console.log('🗑️ Eliminando usuario:', usuarioId);
-            
-            try {
-                const token = localStorage.getItem('auth_token');
-                
-                if (!token) {
-                    alert('No hay sesión activa');
-                    return;
-                }
-                
-                const response = await fetch(`/api/usuarios/${usuarioId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('📥 Respuesta de eliminación:', response.status);
                 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || `Error ${response.status}`);
+                    throw new Error(errorData.error || 'Error al inscribir');
                 }
                 
-                const result = await response.json();
-                console.log('✅ Usuario eliminado:', result);
-                
-                alert('Usuario eliminado exitosamente');
-                loadUsuariosManual(); // Recargar lista
+                alert('✅ Inscripción realizada exitosamente');
+                loadInscripcionesManual();
                 
             } catch (error) {
-                console.error('❌ Error eliminando usuario:', error);
-                alert('Error al eliminar usuario: ' + error.message);
+                console.error('Error inscribiendo:', error);
+                alert('❌ Error: ' + error.message);
             }
         }
         
-        // Función para abrir el formulario de usuario
-        window.openUsuarioForm = async function(usuarioId = null) {
-            console.log('Abriendo formulario de usuario:', usuarioId);
-            
-            const modal = document.getElementById('usuarioFormModal');
-            const form = document.getElementById('usuarioForm');
-            const title = document.getElementById('usuarioFormTitle');
-            const passwordGroup = document.getElementById('passwordGroup');
-            const passwordInput = document.getElementById('usuarioPassword');
-            
-            if (!modal || !form) {
-                console.error('❌ Modal de usuario no encontrado');
-                return;
-            }
-            
-            // Limpiar formulario
-            form.reset();
-            delete form.dataset.usuarioId;
-            
-            if (usuarioId) {
-                // Modo edición
-                title.textContent = 'Editar Usuario';
-                passwordGroup.style.display = 'none';
-                passwordInput.removeAttribute('required');
-                
-                // Cargar datos del usuario
-                try {
-                    const token = localStorage.getItem('auth_token');
-                    const response = await fetch(`/api/usuarios/${usuarioId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Error al cargar usuario');
-                    }
-                    
-                    const usuario = await response.json();
-                    console.log('✅ Datos del usuario:', usuario);
-                    
-                    // Llenar formulario con datos
-                    document.getElementById('usuarioNombre').value = usuario.nombre || '';
-                    document.getElementById('usuarioApellido').value = usuario.apellido || '';
-                    document.getElementById('usuarioEmail').value = usuario.email || '';
-                    document.getElementById('usuarioTelefono').value = usuario.telefono || '';
-                    document.getElementById('usuarioUsername').value = usuario.username || '';
-                    document.getElementById('usuarioPerfil').value = usuario.perfil || '';
-                    document.getElementById('usuarioActivo').checked = usuario.activo;
-                    
-                    // Guardar ID para actualización
-                    form.dataset.usuarioId = usuarioId;
-                    
-                } catch (error) {
-                    console.error('❌ Error cargando usuario:', error);
-                    alert('Error al cargar datos del usuario: ' + error.message);
-                    return;
-                }
-            } else {
-                // Modo creación
-                title.textContent = 'Crear Usuario';
-                passwordGroup.style.display = 'block';
-                passwordInput.setAttribute('required', 'required');
-            }
-            
-            modal.style.display = 'block';
+        // Función auxiliar para formatear fecha
+        function formatDateSimple(dateString) {
+            if (!dateString) return 'No especificada';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES');
         }
         
-        // Función para cerrar el formulario
-        window.closeUsuarioFormModal = function() {
-            const modal = document.getElementById('usuarioFormModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-            
-            const form = document.getElementById('usuarioForm');
-            if (form) {
-                form.reset();
-                delete form.dataset.usuarioId;
-            }
-        }
-        
-        // Manejar submit del formulario de usuario
         document.addEventListener('DOMContentLoaded', function() {
-            const usuarioForm = document.getElementById('usuarioForm');
-            if (usuarioForm) {
-                usuarioForm.addEventListener('submit', async function(event) {
-                    event.preventDefault();
-                    
-                    const submitBtn = usuarioForm.querySelector('button[type="submit"]');
-                    const usuarioId = usuarioForm.dataset.usuarioId;
-                    
-                    // Obtener datos del formulario
-                    const formData = {
-                        nombre: document.getElementById('usuarioNombre').value.trim(),
-                        apellido: document.getElementById('usuarioApellido').value.trim(),
-                        email: document.getElementById('usuarioEmail').value.trim(),
-                        telefono: document.getElementById('usuarioTelefono').value.trim(),
-                        username: document.getElementById('usuarioUsername').value.trim(),
-                        perfil: document.getElementById('usuarioPerfil').value,
-                        activo: document.getElementById('usuarioActivo').checked
-                    };
-                    
-                    // Solo incluir password si es creación o si se cambió
-                    const password = document.getElementById('usuarioPassword').value;
-                    if (password) {
-                        formData.password = password;
-                    }
-                    
-                    console.log('📤 Enviando datos:', formData);
-                    
-                    // Validar datos
-                    if (!formData.nombre || !formData.apellido || !formData.email || !formData.username || !formData.perfil) {
-                        alert('Todos los campos obligatorios deben estar completos');
-                        return;
-                    }
-                    
-                    // Deshabilitar botón durante envío
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = usuarioId ? 'Actualizando...' : 'Creando...';
-                    
-                    try {
-                        const token = localStorage.getItem('auth_token');
-                        const url = usuarioId ? `/api/usuarios/${usuarioId}` : `/api/usuarios`;
-                        const method = usuarioId ? 'PUT' : 'POST';
-                        
-                        const response = await fetch(url, {
-                            method: method,
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(formData)
-                        });
-                        
-                        console.log('📥 Respuesta:', response.status, response.statusText);
-                        
-                        if (!response.ok) {
-                            const errorData = await response.json();
-                            throw new Error(errorData.error || `Error ${response.status}`);
-                        }
-                        
-                        const result = await response.json();
-                        console.log('✅ Usuario guardado:', result);
-                        
-                        alert(usuarioId ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
-                        
-                        closeUsuarioFormModal();
-                        loadUsuariosManual(); // Recargar lista
-                        
-                    } catch (error) {
-                        console.error('❌ Error:', error);
-                        alert(`Error: ${error.message}`);
-                    } finally {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Guardar';
-                    }
-                });
-            }
-        });
-        
-        // Función para eliminar usuario
-        window.deleteUsuario = async function(usuarioId) {
-            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
+            console.log('🚀 Dashboard inicializando...');
+            
+            // Verificar autenticación nuevamente
+            if (!auth.isAuthenticated()) {
+                window.location.href = '/login';
                 return;
             }
             
-            console.log('🗑️ Eliminando usuario:', usuarioId);
-            
-            try {
-                const token = localStorage.getItem('auth_token');
-                
-                if (!token) {
-                    alert('No hay sesión activa');
-                    return;
-                }
-                
-                const response = await fetch(`/api/usuarios/${usuarioId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('📥 Respuesta de eliminación:', response.status);
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Error ${response.status}`);
-                }
-                
-                const result = await response.json();
-                console.log('✅ Usuario eliminado:', result);
-                
-                alert('Usuario eliminado exitosamente');
-                loadUsuariosManual(); // Recargar lista
-                
-            } catch (error) {
-                console.error('❌ Error eliminando usuario:', error);
-                alert('Error al eliminar usuario: ' + error.message);
-            }
-        }
-        
-        // Función para abrir el formulario de usuario
-        window.openUsuarioForm = async function(usuarioId = null) {
-            console.log('Abriendo formulario de usuario:', usuarioId);
-            
-            const modal = document.getElementById('usuarioFormModal');
-            const form = document.getElementById('usuarioForm');
-            const title = document.getElementById('usuarioFormTitle');
-            const passwordGroup = document.getElementById('passwordGroup');
-            const passwordInput = document.getElementById('usuarioPassword');
-            
-            if (!modal || !form) {
-                console.error('❌ Modal de usuario no encontrado');
-                return;
-            }
-            
-            // Limpiar formulario
-            form.reset();
-            delete form.dataset.usuarioId;
-            
-            if (usuarioId) {
-                // Modo edición
-                title.textContent = 'Editar Usuario';
-                passwordGroup.style.display = 'none';
-                passwordInput.removeAttribute('required');
-                
-                // Cargar datos del usuario
-                try {
-                    const token = localStorage.getItem('auth_token');
-                    const response = await fetch(`/api/usuarios/${usuarioId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Error al cargar usuario');
-                    }
-                    
-                    const usuario = await response.json();
-                    console.log('✅ Datos del usuario:', usuario);
-                    
-                    // Llenar formulario con datos
-                    document.getElementById('usuarioNombre').value = usuario.nombre || '';
-                    document.getElementById('usuarioApellido').value = usuario.apellido || '';
-                    document.getElementById('usuarioEmail').value = usuario.email || '';
-                    document.getElementById('usuarioTelefono').value = usuario.telefono || '';
-                    document.getElementById('usuarioUsername').value = usuario.username || '';
-                    document.getElementById('usuarioPerfil').value = usuario.perfil || '';
-                    document.getElementById('usuarioActivo').checked = usuario.activo;
-                    
-                    // Guardar ID para actualización
-                    form.dataset.usuarioId = usuarioId;
-                    
-                } catch (error) {
-                    console.error('❌ Error cargando usuario:', error);
-                    alert('Error al cargar datos del usuario: ' + error.message);
-                    return;
-                }
-            } else {
-                // Modo creación
-                title.textContent = 'Crear Usuario';
-                passwordGroup.style.display = 'block';
-                passwordInput.setAttribute('required', 'required');
-            }
-            
-            modal.style.display = 'block';
-        }
-        
-        // Función para cerrar el formulario
-        window.closeUsuarioFormModal = function() {
-            const modal = document.getElementById('usuarioFormModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-            
-            const form = document.getElementById('usuarioForm');
-            if (form) {
-                form.reset();
-                delete form.dataset.usuarioId;
-            }
-        }
-        
-        // Manejar submit del formulario de usuario
-        document.addEventListener('DOMContentLoaded', function() {
-            const usuarioForm = document.getElementById('usuarioForm');
-            if (usuarioForm) {
-                usuarioForm.addEventListener('submit', async function(event) {
-                    event.preventDefault();
-                    
-                    const submitBtn = usuarioForm.querySelector('button[type="submit"]');
-                    const usuarioId = usuarioForm.dataset.usuarioId;
-                    
-                    // Obtener datos del formulario
-                    const formData = {
-                        nombre: document.getElementById('usuarioNombre').value.trim(),
-                        apellido: document.getElementById('usuarioApellido').value.trim(),
-                        email: document.getElementById('usuarioEmail').value.trim(),
-                        telefono: document.getElementById('usuarioTelefono').value.trim(),
-                        username: document.getElementById('usuarioUsername').value.trim(),
-                        perfil: document.getElementById('usuarioPerfil').value,
-                        activo: document.getElementById('usuarioActivo').checked
-                    };
-                    
-                    // Solo incluir password si es creación o si se cambió
-                    const password = document.getElementById('usuarioPassword').value;
-                    if (password) {
-                        formData.password = password;
-                    }
-                    
-                    console.log('📤 Enviando datos:', formData);
-                    
-                    // Validar datos
-                    if (!formData.nombre || !formData.apellido || !formData.email || !formData.username || !formData.perfil) {
-                        alert('Todos los campos obligatorios deben estar completos');
-                        return;
-                    }
-                    
-                    // Deshabilitar botón durante envío
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = usuarioId ? 'Actualizando...' : 'Creando...';
-                    
-                    try {
-                        const token = localStorage.getItem('auth_token');
-                        const url = usuarioId ? `/api/usuarios/${usuarioId}` : `/api/usuarios`;
-                        const method = usuarioId ? 'PUT' : 'POST';
-                        
-                        const response = await fetch(url, {
-                            method: method,
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(formData)
-                        });
-                        
-                        console.log('📥 Respuesta:', response.status, response.statusText);
-                        
-                        if (!response.ok) {
-                            const errorData = await response.json();
-                            throw new Error(errorData.error || `Error ${response.status}`);
-                        }
-                        
-                        const result = await response.json();
-                        console.log('✅ Usuario guardado:', result);
-                        
-                        alert(usuarioId ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
-                        
-                        closeUsuarioFormModal();
-                        loadUsuariosManual(); // Recargar lista
-                        
-                    } catch (error) {
-                        console.error('❌ Error:', error);
-                        alert(`Error: ${error.message}`);
-                    } finally {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Guardar';
-                    }
-                });
-            }
-        });
-        
-        // Función para eliminar usuario
-        window.deleteUsuario = async function(usuarioId) {
-            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
-                return;
-            }
-            
-            console.log('🗑️ Eliminando usuario:', usuarioId);
-            
-            try {
-                const token = localStorage.getItem('auth_token');
-                
-                if (!token) {
-                    alert('No hay sesión activa');
-                    return;
-                }
-                
-                const response = await fetch(`/api/usuarios/${usuarioId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('📥 Respuesta de eliminación:', response.status);
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Error ${response.status}`);
-                }
-                
-                const result = await response.json();
-                console.log('✅ Usuario eliminado:', result);
-                
-                alert('Usuario eliminado exitosamente');
-                loadUsuariosManual(); // Recargar lista
-                
-            } catch (error) {
-                console.error('❌ Error eliminando usuario:', error);
-                alert('Error al eliminar usuario: ' + error.message);
-            }
-        }
-        
-        // Función para abrir el formulario de usuario
-        window.openUsuarioForm = async function(usuarioId = null) {
-            console.log('Abriendo formulario de usuario:', usuarioId);
-            
-            const modal = document.getElementById('usuarioFormModal');
-            const form = document.getElementById('usuarioForm');
-            const title = document.getElementById('usuarioFormTitle');
-            const passwordGroup = document.getElementById('passwordGroup');
-            const passwordInput = document.getElementById('usuarioPassword');
-            
-            if (!modal || !form) {
-                console.error('❌ Modal de usuario no encontrado');
-                return;
-            }
-            
-            // Limpiar formulario
-            form.reset();
-            delete form.dataset.usuarioId;
-            
-            if (usuarioId) {
-                // Modo edición
-                title.textContent = 'Editar Usuario';
-                passwordGroup.style.display = 'none';
-                passwordInput.removeAttribute('required');
-                
-                // Cargar datos del usuario
-                try {
-                    const token = localStorage.getItem('auth_token');
-                    const response = await fetch(`/api/usuarios/${usuarioId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Error al cargar usuario');
-                    }
-                    
-                    const usuario = await response.json();
-                    console.log('✅ Datos del usuario:', usuario);
-                    
-                    // Llenar formulario con datos
-                    document.getElementById('usuarioNombre').value = usuario.nombre || '';
-                    document.getElementById('usuarioApellido').value = usuario.apellido || '';
-                    document.getElementById('usuarioEmail').value = usuario.email || '';
-                    document.getElementById('usuarioTelefono').value = usuario.telefono || '';
-                    document.getElementById('usuarioUsername').value = usuario.username || '';
-                    document.getElementById('usuarioPerfil').value = usuario.perfil || '';
-                    document.getElementById('usuarioActivo').checked = usuario.activo;
-                    
-                    // Guardar ID para actualización
-                    form.dataset.usuarioId = usuarioId;
-                    
-                } catch (error) {
-                    console.error('❌ Error cargando usuario:', error);
-                    alert('Error al cargar datos del usuario: ' + error.message);
-                    return;
-                }
-            } else {
-                // Modo creación
-                title.textContent = 'Crear Usuario';
-                passwordGroup.style.display = 'block';
-                passwordInput.setAttribute('required', 'required');
-            }
-            
-            modal.style.display = 'block';
-        }
-        
-        // Función para cerrar el formulario
-        window.closeUsuarioFormModal = function() {
-            const modal = document.getElementById('usuarioFormModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-            
-            const form = document.getElementById('usuarioForm');
-            if (form) {
-                form.reset();
-                delete form.dataset.usuarioId;
-            }
-        }
-        
-        // Manejar submit del formulario de usuario
-        document.addEventListener('DOMContentLoaded', function() {
-            const usuarioForm = document.getElementById('usuarioForm');
-            if (usuarioForm) {
-                usuarioForm.addEventListener('submit', async function(event) {
-                    event.preventDefault();
-                    
-                    const submitBtn = usuarioForm.querySelector('button[type="submit"]');
-                    const usuarioId = usuarioForm.dataset.usuarioId;
-                    
-                    // Obtener datos del formulario
-                    const formData = {
-                        nombre: document.getElementById('usuarioNombre').value.trim(),
-                        apellido: document.getElementById('usuarioApellido').value.trim(),
-                        email: document.getElementById('usuarioEmail').value.trim(),
-                        telefono: document.getElementById('usuarioTelefono').value.trim(),
-                        username: document.getElementById('usuarioUsername').value.trim(),
-                        perfil: document.getElementById('usuarioPerfil').value,
-                        activo: document.getElementById('usuarioActivo').checked
-                    };
-                    
-                    // Solo incluir password si es creación o si se cambió
-                    const password = document.getElementById('usuarioPassword').value;
-                    if (password) {
-                        formData.password = password;
-                    }
-                    
-                    console.log('📤 Enviando datos:', formData);
-                    
-                    // Validar datos
-                    if (!formData.nombre || !formData.apellido || !formData.email || !formData.username || !formData.perfil) {
-                        alert('Todos los campos obligatorios deben estar completos');
-                        return;
-                    }
-                    
-                    // Deshabilitar botón durante envío
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = usuarioId ? 'Actualizando...' : 'Creando...';
-                    
-                    try {
-                        const token = localStorage.getItem('auth_token');
-                        const url = usuarioId ? `/api/usuarios/${usuarioId}` : `/api/usuarios`;
-                        const method = usuarioId ? 'PUT' : 'POST';
-                        
-                        const response = await fetch(url, {
-                            method: method,
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(formData)
-                        });
-                        
-                        console.log('📥 Respuesta:', response.status, response.statusText);
-                        
-                        if (!response.ok) {
-                            const errorData = await response.json();
-                            throw new Error(errorData.error || `Error ${response.status}`);
-                        }
-                        
-                        const result = await response.json();
-                        console.log('✅ Usuario guardado:', result);
-                        
-                        alert(usuarioId ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
-                        
-                        closeUsuarioFormModal();
-                        loadUsuariosManual(); // Recargar lista
-                        
-                    } catch (error) {
-                        console.error('❌ Error:', error);
-                        alert(`Error: ${error.message}`);
-                    } finally {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Guardar';
-                    }
-                });
-            }
-        });
-        
-        // Función para eliminar usuario
-        window.deleteUsuario = async function(usuarioId) {
-            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
-                return;
-            }
-            
-            console.log('🗑️ Eliminando usuario:', usuarioId);
-            
-            try {
-                const token = localStorage.getItem('auth_token');
-                
-                if (!token) {
-                    alert('No hay sesión activa');
-                    return;
-                }
-                
-                const response = await fetch(`/api/usuarios/${usuarioId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('📥 Respuesta de eliminación:', response.status);
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Error ${response.status}`);
-                }
-                
-                const result = await response.json();
-                console.log('✅ Usuario eliminado:', result);
-                
-                alert('Usuario eliminado exitosamente');
-                loadUsuariosManual(); // Recargar lista
-                
-            } catch (error) {
-                console.error('❌ Error eliminando usuario:', error);
-                alert('Error al eliminar usuario: ' + error.message);
-            }
-        }
-        
-        // Función para abrir el formulario de usuario
-        window.openUsuarioForm = async function(usuarioId = null) {
-            console.log('Abriendo formulario de usuario:', usuarioId);
-            
-            const modal = document.getElementById('usuarioFormModal');
-            const form = document.getElementById('usuarioForm');
-            const title = document.getElementById('usuarioFormTitle');
-            const passwordGroup = document.getElementById('passwordGroup');
-            const passwordInput = document.getElementById('usuarioPassword');
-            
-            if (!modal || !form) {
-                console.error('❌ Modal de usuario no encontrado');
-                return;
-            }
-            
-            // Limpiar formulario
-            form.reset();
-            delete form.dataset.usuarioId;
-            
-            if (usuarioId) {
-                // Modo edición
-                title.textContent = 'Editar Usuario';
-                passwordGroup.style.display = 'none';
-                passwordInput.removeAttribute('required');
-                
-                // Cargar datos del usuario
-                try {
-                    const token = localStorage.getItem('auth_token');
-                    const response = await fetch(`/api/usuarios/${usuarioId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Error al cargar usuario');
-                    }
-                    
-                    const usuario = await response.json();
-                    console.log('✅ Datos del usuario:', usuario);
-                    
-                    // Llenar formulario con datos
-                    document.getElementById('usuarioNombre').value = usuario.nombre || '';
-                    document.getElementById('usuarioApellido').value = usuario.apellido || '';
-                    document.getElementById('usuarioEmail').value = usuario.email || '';
-                    document.getElementById('usuarioTelefono').value = usuario.telefono || '';
-                    document.getElementById('usuarioUsername').value = usuario.username || '';
-                    document.getElementById('usuarioPerfil').value = usuario.perfil || '';
-                    document.getElementById('usuarioActivo').checked = usuario.activo;
-                    
-                    // Guardar ID para actualización
-                    form.dataset.usuarioId = usuarioId;
-                    
-                } catch (error) {
-                    console.error('❌ Error cargando usuario:', error);
-                    alert('Error al cargar datos del usuario: ' + error.message);
-                    return;
-                }
-            } else {
-                // Modo creación
-                title.textContent = 'Crear Usuario';
-                passwordGroup.style.display = 'block';
-                passwordInput.setAttribute('required', 'required');
-            }
-            
-            modal.style.display = 'block';
-        }
-        
-        // Función para cerrar el formulario
-        window.closeUsuarioFormModal = function() {
-            const modal = document.getElementById('usuarioFormModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-            
-            const form = document.getElementById('usuarioForm');
-            if (form) {
-                form.reset();
-                delete form.dataset.usuarioId;
-            }
-        }
-        
-        // Manejar submit del formulario de usuario
-        document.addEventListener('DOMContentLoaded', function() {
-            const usuarioForm = document.getElementById('usuarioForm');
-            if (usuarioForm) {
-                usuarioForm.addEventListener('submit', async function(event) {
-                    event.preventDefault();
-                    
-                    const submitBtn = usuarioForm.querySelector('button[type="submit"]');
-                    const usuarioId = usuarioForm.dataset.usuarioId;
-                    
-                    // Obtener datos del formulario
-                    const formData = {
-                        nombre: document.getElementById('usuarioNombre').value.trim(),
-                        apellido: document.getElementById('usuarioApellido').value.trim(),
-                        email: document.getElementById('usuarioEmail').value.trim(),
-                        telefono: document.getElementById('usuarioTelefono').value.trim(),
-                        username: document.getElementById('usuarioUsername').value.trim(),
-                        perfil: document.getElementById('usuarioPerfil').value,
-                        activo: document.getElementById('usuarioActivo').checked
-                    };
-                    
-                    // Solo incluir password si es creación o si se cambió
-                    const password = document.getElementById('usuarioPassword').value;
-                    if (password) {
-                        formData.password = password;
-                    }
-                    
-                    console.log('📤 Enviando datos:', formData);
-                    
-                    // Validar datos
-                    if (!formData.nombre || !formData.apellido || !formData.email || !formData.username || !formData.perfil) {
-                        alert('Todos los campos obligatorios deben estar completos');
-                        return;
-                    }
-                    
-                    // Deshabilitar botón durante envío
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = usuarioId ? 'Actualizando...' : 'Creando...';
-                    
-                    try {
-                        const token = localStorage.getItem('auth_token');
-                        const url = usuarioId ? `/api/usuarios/${usuarioId}` : `/api/usuarios`;
-                        const method = usuarioId ? 'PUT' : 'POST';
-                        
-                        const response = await fetch(url, {
-                            method: method,
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(formData)
-                        });
-                        
-                        console.log('📥 Respuesta:', response.status, response.statusText);
-                        
-                        if (!response.ok) {
-                            const errorData = await response.json();
-                            throw new Error(errorData.error || `Error ${response.status}`);
-                        }
-                        
-                        const result = await response.json();
-                        console.log('✅ Usuario guardado:', result);
-                        
-                        alert(usuarioId ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
-                        
-                        closeUsuarioFormModal();
-                        loadUsuariosManual(); // Recargar lista
-                        
-                    } catch (error) {
-                        console.error('❌ Error:', error);
-                        alert(`Error: ${error.message}`);
-                    } finally {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Guardar';
-                    }
-                });
-            }
-        });
-        
-        // Función para eliminar usuario
-        window.deleteUsuario = async function(usuarioId) {
-            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
-                return;
-            }
-            
-            console.log('🗑️ Eliminando usuario:', usuarioId);
-            
-            try {
-                const token = localStorage.getItem('auth_token');
-                
-                if (!token) {
-                    alert('No hay sesión activa');
-                    return;
-                }
-                
-                const response = await fetch(`/api/usuarios/${usuarioId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('📥 Respuesta de eliminación:', response.status);
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Error ${response.status}`);
-                }
-                
-                const result = await response.json();
-                console.log('✅ Usuario eliminado:', result);
-                
-                alert('Usuario eliminado exitosamente');
-                loadUsuariosManual(); // Recargar lista
-                
-            } catch (error) {
-                console.error('❌ Error eliminando usuario:', error);
-                alert('Error al eliminar usuario: ' + error.message);
-            }
-        }
-        
-        // Función para abrir el formulario de usuario
-        window.openUsuarioForm = async function(usuarioId = null) {
-            console.log('Abriendo formulario de usuario:', usuarioId);
-            
-            const modal = document.getElementById('usuarioFormModal');
-            const form = document.getElementById('usuarioForm');
-            const title = document.getElementById('usuarioFormTitle');
-            const passwordGroup = document.getElementById('passwordGroup');
-            const passwordInput = document.getElementById('usuarioPassword');
-            
-            if (!modal || !form) {
-                console.error('❌ Modal de usuario no encontrado');
-                return;
-            }
-            
-            // Limpiar formulario
-            form.reset();
-            delete form.dataset.usuarioId;
-            
-            if (usuarioId) {
-                // Modo edición
-                title.textContent = 'Editar Usuario';
-                passwordGroup.style.display = 'none';
-                passwordInput.removeAttribute('required');
-                
-                // Cargar datos del usuario
-                try {
-                    const token = localStorage.getItem('auth_token');
-                    const response = await fetch(`/api/usuarios/${usuarioId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Error al cargar usuario');
-                    }
-                    
-                    const usuario = await response.json();
-                    console.log('✅ Datos del usuario:', usuario);
-                    
-                    // Llenar formulario con datos
-                    document.getElementById('usuarioNombre').value = usuario.nombre || '';
-                    document.getElementById('usuarioApellido').value = usuario.apellido || '';
-                    document.getElementById('usuarioEmail').value = usuario.email || '';
-                    document.getElementById('usuarioTelefono').value = usuario.telefono || '';
-                    document.getElementById('usuarioUsername').value = usuario.username || '';
-                    document.getElementById('usuarioPerfil').value = usuario.perfil || '';
-                    document.getElementById('usuarioActivo').checked = usuario.activo;
-                    
-                    // Guardar ID para actualización
-                    form.dataset.usuarioId = usuarioId;
-                    
-                } catch (error) {
-                    console.error('❌ Error cargando usuario:', error);
-                    alert('Error al cargar datos del usuario: ' + error.message);
-                    return;
-                }
-            } else {
-                // Modo creación
-                title.textContent = 'Crear Usuario';
-                passwordGroup.style.display = 'block';
-                passwordInput.setAttribute('required', 'required');
-            }
-            
-            modal.style.display = 'block';
-        }
-        
-        // Función para cerrar el formulario
-        window.closeUsuarioFormModal = function() {
-            const modal = document.getElementById('usuarioFormModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-            
-            const form = document.getElementById('usuarioForm');
-            if (form) {
-                form.reset();
-                delete form.dataset.usuarioId;
-            }
-        }
-        
-        // Manejar submit del formulario de usuario
-        document.addEventListener('DOMContentLoaded', function() {
-            const usuarioForm = document.getElementById('usuarioForm');
-            if (usuarioForm) {
-                usuarioForm.addEventListener('submit', async function(event) {
-                    event.preventDefault();
-                    
-                    const submitBtn = usuarioForm.querySelector('button[type="submit"]');
-                    const usuarioId = usuarioForm.dataset.usuarioId;
-                    
-                    // Obtener datos del formulario
-                    const formData = {
-                        nombre: document.getElementById('usuarioNombre').value.trim(),
-                        apellido: document.getElementById('usuarioApellido').value.trim(),
-                        email: document.getElementById('usuarioEmail').value.trim(),
-                        telefono: document.getElementById('usuarioTelefono').value.trim(),
-                        username: document.getElementById('usuarioUsername').value.trim(),
-                        perfil: document.getElementById('usuarioPerfil').value,
-                        activo: document.getElementById('usuarioActivo').checked
-                    };
-                    
-                    // Solo incluir password si es creación o si se cambió
-                    const password = document.getElementById('usuarioPassword').value;
-                    if (password) {
-                        formData.password = password;
-                    }
-                    
-                    console.log('📤 Enviando datos:', formData);
-                    
-                    // Validar datos
-                    if (!formData.nombre || !formData.apellido || !formData.email || !formData.username || !formData.perfil) {
-                        alert('Todos los campos obligatorios deben estar completos');
-                        return;
-                    }
-                    
-                    // Deshabilitar botón durante envío
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = usuarioId ? 'Actualizando...' : 'Creando...';
-                    
-                    try {
-                        const token = localStorage.getItem('auth_token');
-                        const url = usuarioId ? `/api/usuarios/${usuarioId}` : `/api/usuarios`;
-                        const method = usuarioId ? 'PUT' : 'POST';
-                        
-                        const response = await fetch(url, {
-                            method: method,
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(formData)
-                        });
-                        
-                        console.log('📥 Respuesta:', response.status, response.statusText);
-                        
-                        if (!response.ok) {
-                            const errorData = await response.json();
-                            throw new Error(errorData.error || `Error ${response.status}`);
-                        }
-                        
-                        const result = await response.json();
-                        console.log('✅ Usuario guardado:', result);
-                        
-                        alert(usuarioId ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
-                        
-                        closeUsuarioFormModal();
-                        loadUsuariosManual(); // Recargar lista
-                        
-                    } catch (error) {
-                        console.error('❌ Error:', error);
-                        alert(`Error: ${error.message}`);
-                    } finally {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Guardar';
-                    }
-                });
-            }
-        });
-        
-        // Función para eliminar usuario
-        window.deleteUsuario = async function(usuarioId) {
-            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción no se puede deshacer.')) {
-                return;
-            }
-            
-            console.log('🗑️ Eliminando usuario:', usuarioId);
-            
-            try {
-                const token = localStorage.getItem('auth_token');
-                
-                if (!token) {
-                    alert('No hay sesión activa');
-                    return;
-                }
-                
-                const response = await fetch(`/api/usuarios/${usuarioId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('📥 Respuesta de eliminación:', response.status);
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Error ${response.status}`);
-                }
-                
-                const result = await response.json();
-                console.log('✅ Usuario eliminado:', result);
-                
-                alert('Usuario eliminado exitosamente');
-                loadUsuariosManual(); // Recargar lista
-                
-            } catch (error) {
-                console.error('❌ Error eliminando usuario:', error);
-                alert('Error al eliminar usuario: ' + error.message);
-            }
-        }
-        
-        // Manejar logout
-        document.getElementById('logoutBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-            auth.logout();
-        });
-        
-        // Cargar información del usuario
-        document.addEventListener('DOMContentLoaded', function() {
+            // Obtener datos del usuario
             const user = auth.getUser();
-            if (user) {
+            
+            if (!user) {
+                console.log('❌ No hay datos de usuario');
+                auth.clearAuth();
+                window.location.href = '/login';
+                return;
+            }
+            
+            console.log('👤 Usuario:', user.nombre, user.apellido);
+            
+            // Cargar información del usuario en la interfaz
+            try {
                 document.getElementById('userName').textContent = `${user.nombre} ${user.apellido}`;
                 document.getElementById('userEmail').textContent = user.email;
                 
                 const userBadge = document.getElementById('userBadge');
-                if
+                if (userBadge) {
+                    const badgeText = userBadge.querySelector('span');
+                    if (badgeText) {
+                        badgeText.textContent = user.perfil;
+                    }
+                }
+                
+                console.log('✅ Datos de usuario cargados en la interfaz');
+            } catch (error) {
+                console.error('❌ Error cargando datos de usuario en UI:', error);
+            }
+            
+            // Configurar logout - IMPORTANTE: Limpiar eventos anteriores
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                console.log('🔧 Configurando botón de logout...');
+                
+                // Clonar el botón para eliminar todos los event listeners anteriores
+                const newLogoutBtn = logoutBtn.cloneNode(true);
+                logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+                
+                // Agregar nuevo event listener
+                newLogoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('🚪 Botón de logout presionado');
+                    
+                    // Llamar al método logout de auth
+                    auth.logout();
+                });
+                
+                console.log('✅ Botón de logout configurado correctamente');
+            } else {
+                console.error('❌ Botón de logout no encontrado');
+            }
+            
+            // Mostrar/ocultar botones según perfil
+            const newTournamentBtn = document.getElementById('newTournamentBtn');
+            const newUserBtn = document.getElementById('newUserBtn');
+            
+            if (newTournamentBtn && !['profesor', 'administrador'].includes(user.perfil)) {
+                newTournamentBtn.style.display = 'none';
+            }
+            
+            if (newUserBtn && user.perfil !== 'administrador') {
+                newUserBtn.style.display = 'none';
+            }
+            
+            // Cargar dashboard stats
+            if (typeof loadDashboardStats === 'function') {
+                loadDashboardStats();
+            }
+            
+            console.log('✅ Dashboard inicializado correctamente');
+        });
+    </script>
+</body>
+</html>

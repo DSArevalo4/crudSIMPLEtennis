@@ -1,170 +1,155 @@
 # middleware/auth_middleware.py
 import logging
 from functools import wraps
-from flask import request, jsonify, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt, verify_jwt_in_request
+from flask import request, jsonify
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity, get_jwt
 from flask_jwt_extended.exceptions import JWTExtendedException
-from datetime import datetime, timedelta
+from config.database import get_db_session
+from models.usuario_model import Usuario
 
 logger = logging.getLogger(__name__)
 
 def require_auth(f):
     """
     Decorador que requiere autenticación JWT válida.
-    Incluye validaciones adicionales de seguridad.
+    Reemplaza @jwt_required() con validaciones adicionales.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         try:
-            # Verificar que el JWT esté presente y sea válido
+            # Verificar JWT en la petición
             verify_jwt_in_request()
             
-            # Obtener información del token
-            current_user_id = get_jwt_identity()
-            jwt_data = get_jwt()
+            # Obtener ID del usuario del token
+            user_id = get_jwt_identity()
             
-            # Validaciones adicionales de seguridad
-            if not current_user_id:
-                logger.warning("Token JWT sin identidad de usuario")
+            if not user_id:
                 return jsonify({
-                    'error': 'Token inválido: sin identidad de usuario',
-                    'code': 'INVALID_USER_ID',
+                    'error': 'Token inválido',
+                    'code': 'INVALID_TOKEN',
                     'redirect': '/login'
                 }), 401
             
-            # Verificar que el token no esté en una lista negra (si implementas blacklist)
-            # token_jti = jwt_data.get('jti')
-            # if is_token_blacklisted(token_jti):
-            #     return jsonify({'error': 'Token revocado'}), 401
-            
-            # Verificar que el usuario siga activo
-            from config.database import get_db_session
-            from models.usuario_model import Usuario
-            
+            # Verificar que el usuario existe y está activo
             session = get_db_session()
             try:
                 usuario = session.query(Usuario).filter(
-                    Usuario.id == current_user_id,
+                    Usuario.id == user_id,
                     Usuario.activo == True
                 ).first()
                 
                 if not usuario:
-                    logger.warning(f"Usuario {current_user_id} no encontrado o inactivo")
                     return jsonify({
                         'error': 'Usuario no encontrado o inactivo',
                         'code': 'USER_NOT_FOUND',
                         'redirect': '/login'
                     }), 401
-                    
+                
+                # Usuario válido, continuar con la función
+                return f(*args, **kwargs)
+                
             finally:
                 session.close()
             
-            # Agregar información del usuario a la request para uso en la función
-            request.current_user_id = current_user_id
-            request.current_user = usuario
-            
-            return f(*args, **kwargs)
-            
-        except JWTExtendedException as e:
-            logger.warning(f"Error JWT: {str(e)}")
+        except Exception as e:
             return jsonify({
-                'error': 'Token JWT inválido o expirado',
-                'code': 'JWT_ERROR',
+                'error': 'Error de autenticación',
+                'code': 'AUTH_ERROR',
+                'message': str(e),
                 'redirect': '/login'
             }), 401
-            
-        except Exception as e:
-            logger.error(f"Error en middleware de autenticación: {str(e)}")
-            return jsonify({
-                'error': 'Error interno de autenticación',
-                'code': 'AUTH_ERROR',
-                'redirect': '/login'
-            }), 500
     
     return decorated_function
 
 def require_admin(f):
     """
-    Decorador que requiere autenticación y rol de administrador.
+    Decorador que requiere perfil de administrador.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         try:
-            # Primero verificar autenticación básica
+            # Verificar JWT
             verify_jwt_in_request()
+            user_id = get_jwt_identity()
             
-            current_user_id = get_jwt_identity()
-            jwt_data = get_jwt()
-            
-            # Verificar rol de administrador
-            user_profile = jwt_data.get('perfil')
-            if user_profile != 'administrador':
-                logger.warning(f"Usuario {current_user_id} intentó acceder a recurso de administrador")
-                return jsonify({
-                    'error': 'Acceso denegado: se requiere rol de administrador',
-                    'code': 'INSUFFICIENT_PERMISSIONS'
-                }), 403
-            
-            request.current_user_id = current_user_id
-            return f(*args, **kwargs)
-            
-        except JWTExtendedException as e:
-            logger.warning(f"Error JWT en require_admin: {str(e)}")
-            return jsonify({
-                'error': 'Token JWT inválido o expirado',
-                'code': 'JWT_ERROR',
-                'redirect': '/login'
-            }), 401
+            # Verificar perfil de administrador
+            session = get_db_session()
+            try:
+                usuario = session.query(Usuario).filter(
+                    Usuario.id == user_id,
+                    Usuario.activo == True
+                ).first()
+                
+                if not usuario:
+                    return jsonify({
+                        'error': 'Usuario no encontrado',
+                        'code': 'USER_NOT_FOUND'
+                    }), 401
+                
+                if usuario.perfil != 'administrador':
+                    return jsonify({
+                        'error': 'Se requieren permisos de administrador',
+                        'code': 'INSUFFICIENT_PERMISSIONS',
+                        'userProfile': usuario.perfil,
+                        'requiredProfile': 'administrador'
+                    }), 403
+                
+                return f(*args, **kwargs)
+                
+            finally:
+                session.close()
             
         except Exception as e:
-            logger.error(f"Error en middleware de administrador: {str(e)}")
             return jsonify({
-                'error': 'Error interno de autenticación',
-                'code': 'AUTH_ERROR',
-                'redirect': '/login'
-            }), 500
+                'error': 'Error de autenticación',
+                'message': str(e)
+            }), 401
     
     return decorated_function
 
 def require_profesor_or_admin(f):
     """
-    Decorador que requiere autenticación y rol de profesor o administrador.
+    Decorador que requiere perfil de profesor o administrador.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         try:
+            # Verificar JWT
             verify_jwt_in_request()
+            user_id = get_jwt_identity()
             
-            current_user_id = get_jwt_identity()
-            jwt_data = get_jwt()
-            
-            # Verificar rol de profesor o administrador
-            user_profile = jwt_data.get('perfil')
-            if user_profile not in ['profesor', 'administrador']:
-                logger.warning(f"Usuario {current_user_id} intentó acceder a recurso restringido")
-                return jsonify({
-                    'error': 'Acceso denegado: se requiere rol de profesor o administrador',
-                    'code': 'INSUFFICIENT_PERMISSIONS'
-                }), 403
-            
-            request.current_user_id = current_user_id
-            return f(*args, **kwargs)
-            
-        except JWTExtendedException as e:
-            logger.warning(f"Error JWT en require_profesor_or_admin: {str(e)}")
-            return jsonify({
-                'error': 'Token JWT inválido o expirado',
-                'code': 'JWT_ERROR',
-                'redirect': '/login'
-            }), 401
+            # Verificar perfil
+            session = get_db_session()
+            try:
+                usuario = session.query(Usuario).filter(
+                    Usuario.id == user_id,
+                    Usuario.activo == True
+                ).first()
+                
+                if not usuario:
+                    return jsonify({
+                        'error': 'Usuario no encontrado',
+                        'code': 'USER_NOT_FOUND'
+                    }), 401
+                
+                if usuario.perfil not in ['profesor', 'administrador']:
+                    return jsonify({
+                        'error': 'Se requieren permisos de profesor o administrador',
+                        'code': 'INSUFFICIENT_PERMISSIONS',
+                        'userProfile': usuario.perfil,
+                        'requiredProfiles': ['profesor', 'administrador']
+                    }), 403
+                
+                return f(*args, **kwargs)
+                
+            finally:
+                session.close()
             
         except Exception as e:
-            logger.error(f"Error en middleware de profesor/admin: {str(e)}")
             return jsonify({
-                'error': 'Error interno de autenticación',
-                'code': 'AUTH_ERROR',
-                'redirect': '/login'
-            }), 500
+                'error': 'Error de autenticación',
+                'message': str(e)
+            }), 401
     
     return decorated_function
 

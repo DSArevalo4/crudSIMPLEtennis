@@ -2,6 +2,7 @@
 from models.inscripcion_model import Inscripcion
 from models.torneo_model import Torneo
 from models.usuario_model import Usuario
+from sqlalchemy.orm import joinedload
 
 class InscripcionService:
     def __init__(self, db_session):
@@ -143,3 +144,128 @@ class InscripcionService:
             Inscripcion.torneo_id == torneo_id,
             Inscripcion.deportista_id == deportista_id
         ).first()
+
+    def listar_inscripciones_por_perfil(self, user_id, perfil):
+        """
+        Lista inscripciones según el perfil del usuario:
+        - Administrador: todas las inscripciones
+        - Profesor: inscripciones de sus torneos
+        - Deportista: solo sus inscripciones
+        """
+        query = self.db.query(Inscripcion).join(Torneo).join(
+            Usuario, Inscripcion.deportista_id == Usuario.id
+        )
+        
+        if perfil == 'deportista':
+            query = query.filter(Inscripcion.deportista_id == user_id)
+        elif perfil == 'profesor':
+            query = query.filter(Torneo.profesor_id == user_id)
+        # Administrador ve todas las inscripciones (sin filtro adicional)
+        
+        inscripciones = query.all()
+        
+        # Agregar información adicional
+        for inscripcion in inscripciones:
+            torneo = self.db.query(Torneo).filter(Torneo.id == inscripcion.torneo_id).first()
+            deportista = self.db.query(Usuario).filter(Usuario.id == inscripcion.deportista_id).first()
+            
+            inscripcion.torneo_nombre = torneo.nombre if torneo else 'Desconocido'
+            inscripcion.deportista_nombre = f"{deportista.nombre} {deportista.apellido}" if deportista else 'Desconocido'
+        
+        return inscripciones
+
+    def crear_inscripcion(self, torneo_id, deportista_id):
+        """
+        Crea una nueva inscripción.
+        """
+        # Verificar que el torneo existe
+        torneo = self.db.query(Torneo).filter(Torneo.id == torneo_id).first()
+        if not torneo:
+            raise ValueError("El torneo no existe")
+        
+        # Verificar que el deportista existe
+        deportista = self.db.query(Usuario).filter(
+            Usuario.id == deportista_id,
+            Usuario.perfil == 'deportista',
+            Usuario.activo == True
+        ).first()
+        if not deportista:
+            raise ValueError("El deportista no existe o no está activo")
+        
+        # Verificar que no haya duplicados
+        existing = self.db.query(Inscripcion).filter(
+            Inscripcion.torneo_id == torneo_id,
+            Inscripcion.deportista_id == deportista_id
+        ).first()
+        
+        if existing:
+            raise ValueError("El deportista ya está inscrito en este torneo")
+        
+        # Verificar cupo del torneo
+        inscripciones_count = self.db.query(Inscripcion).filter(
+            Inscripcion.torneo_id == torneo_id,
+            Inscripcion.estado.in_(['pendiente', 'aceptada'])
+        ).count()
+        
+        if inscripciones_count >= torneo.max_participantes:
+            raise ValueError("El torneo ya alcanzó el máximo de participantes")
+        
+        # Crear inscripción
+        inscripcion = Inscripcion(
+            torneo_id=torneo_id,
+            deportista_id=deportista_id,
+            estado='pendiente'
+        )
+        
+        self.db.add(inscripcion)
+        self.db.commit()
+        self.db.refresh(inscripcion)
+        
+        return inscripcion
+
+    def aceptar_inscripcion(self, inscripcion_id):
+        """
+        Acepta una inscripción.
+        """
+        inscripcion = self.db.query(Inscripcion).filter(Inscripcion.id == inscripcion_id).first()
+        if not inscripcion:
+            return None
+        
+        inscripcion.estado = 'aceptada'
+        self.db.commit()
+        self.db.refresh(inscripcion)
+        
+        return inscripcion
+
+    def rechazar_inscripcion(self, inscripcion_id):
+        """
+        Rechaza una inscripción.
+        """
+        inscripcion = self.db.query(Inscripcion).filter(Inscripcion.id == inscripcion_id).first()
+        if not inscripcion:
+            return None
+        
+        inscripcion.estado = 'rechazada'
+        self.db.commit()
+        self.db.refresh(inscripcion)
+        
+        return inscripcion
+
+    def eliminar_inscripcion(self, inscripcion_id, user_id, perfil):
+        """
+        Elimina una inscripción.
+        - Deportistas solo pueden eliminar sus propias inscripciones
+        - Profesores y administradores pueden eliminar cualquier inscripción
+        """
+        inscripcion = self.db.query(Inscripcion).filter(Inscripcion.id == inscripcion_id).first()
+        if not inscripcion:
+            return False
+        
+        # Verificar permisos
+        if perfil == 'deportista' and inscripcion.deportista_id != user_id:
+            raise ValueError("No tienes permisos para eliminar esta inscripción")
+        
+        self.db.delete(inscripcion)
+        self.db.commit()
+        
+        return True

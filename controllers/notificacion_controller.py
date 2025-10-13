@@ -1,15 +1,13 @@
 # controllers/notificacion_controller.py
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from services.notificacion_service import NotificacionService
 from config.database import get_db_session
-from middleware.auth_middleware import require_auth  # Corregido
-from models.notificacion_model import Notificacion
-from models.usuario_model import Usuario
-import traceback
 
-notificacion_bp = Blueprint('notificacion', __name__)
+notificacion_bp = Blueprint('notificacion_bp', __name__)
 
 @notificacion_bp.route('/deportistas/<int:deportista_id>/notificaciones', methods=['GET'])
+@jwt_required()
 def obtener_notificaciones_deportista(deportista_id):
     """
     GET /deportistas/<deportista_id>/notificaciones
@@ -26,6 +24,7 @@ def obtener_notificaciones_deportista(deportista_id):
         return jsonify({'error': str(e)}), 500
 
 @notificacion_bp.route('/deportistas/<int:deportista_id>/proximo-partido', methods=['GET'])
+@jwt_required()
 def obtener_proximo_partido_notificacion(deportista_id):
     """
     GET /deportistas/<deportista_id>/proximo-partido
@@ -43,6 +42,7 @@ def obtener_proximo_partido_notificacion(deportista_id):
         return jsonify({'error': str(e)}), 500
 
 @notificacion_bp.route('/partidos/<int:partido_id>/notificar-resultado', methods=['POST'])
+@jwt_required()
 def notificar_resultado_partido(partido_id):
     """
     POST /partidos/<int:partido_id>/notificar-resultado
@@ -60,6 +60,7 @@ def notificar_resultado_partido(partido_id):
         return jsonify({'error': str(e)}), 500
 
 @notificacion_bp.route('/torneos/<int:torneo_id>/ronda/<int:ronda>/notificar', methods=['POST'])
+@jwt_required()
 def notificar_nueva_ronda(torneo_id, ronda):
     """
     POST /torneos/<int:torneo_id>/ronda/<int:ronda>/notificar
@@ -80,6 +81,7 @@ def notificar_nueva_ronda(torneo_id, ronda):
         return jsonify({'error': str(e)}), 500
 
 @notificacion_bp.route('/inscripciones/<int:inscripcion_id>/notificar-aceptacion', methods=['POST'])
+@jwt_required()
 def notificar_inscripcion_aceptada(inscripcion_id):
     """
     POST /inscripciones/<int:inscripcion_id>/notificar-aceptacion
@@ -97,6 +99,7 @@ def notificar_inscripcion_aceptada(inscripcion_id):
         return jsonify({'error': str(e)}), 500
 
 @notificacion_bp.route('/recordatorios/partidos', methods=['GET'])
+@jwt_required()
 def generar_recordatorios_partidos():
     """
     GET /recordatorios/partidos

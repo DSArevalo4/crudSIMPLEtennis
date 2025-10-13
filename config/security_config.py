@@ -29,7 +29,14 @@ SECURITY_CONFIG = {
         'X-Frame-Options': 'DENY',
         'X-XSS-Protection': '1; mode=block',
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https:;"
+        'Content-Security-Policy': (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+            "font-src 'self' https://fonts.gstatic.com data:; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self'"
+        )
     },
     
     # Configuración de validación de entrada
@@ -68,9 +75,24 @@ SECURITY_CONFIG = {
 
 def get_security_config():
     """
-    Retorna la configuración de seguridad.
+    Retorna la configuración de seguridad de la aplicación.
     """
-    return SECURITY_CONFIG
+    return {
+        'SECURITY_HEADERS': {
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'DENY',
+            'X-XSS-Protection': '1; mode=block',
+            'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+            'Content-Security-Policy': (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+                "font-src 'self' https://fonts.gstatic.com data:; "
+                "img-src 'self' data: https:; "
+                "connect-src 'self'"
+            )
+        }
+    }
 
 def is_development():
     """
@@ -89,12 +111,12 @@ def get_allowed_origins():
 
 def get_cors_config():
     """
-    Retorna la configuración de CORS según el entorno.
+    Retorna la configuración de CORS.
     """
     return {
-        'origins': get_allowed_origins(),
-        'methods': SECURITY_CONFIG['CORS_METHODS'],
-        'allow_headers': SECURITY_CONFIG['CORS_HEADERS'],
+        'origins': ['http://localhost:5000', 'http://127.0.0.1:5000'],
+        'methods': ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        'allow_headers': ['Content-Type', 'Authorization'],
         'supports_credentials': True
     }
 

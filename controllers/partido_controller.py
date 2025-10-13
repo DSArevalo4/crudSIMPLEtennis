@@ -1,12 +1,9 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from services.partido_service import PartidoService
 from config.database import get_db_session
-from middleware.auth_middleware import require_auth  # Corregido
-from models.partido_model import Partido
-from models.torneo_model import Torneo
-import traceback
 
-partido_bp = Blueprint('partido', __name__)
+partido_bp = Blueprint('partido_bp', __name__)
 
 @partido_bp.route('/partidos', methods=['GET'])
 def get_partidos():

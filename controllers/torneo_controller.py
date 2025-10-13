@@ -1,8 +1,7 @@
 # controllers/torneo_controller.py
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from services.torneo_service import TorneoService
-from services.auth_service import AuthService
 from config.database import get_db_session
 
 torneo_bp = Blueprint('torneo_bp', __name__)

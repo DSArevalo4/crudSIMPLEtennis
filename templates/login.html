@@ -65,20 +65,20 @@
             <form id="registerForm" class="register-form">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="nombre">Nombre</label>
+                        <label for="regNombre">Nombre</label>
                         <input 
                             type="text" 
-                            id="nombre" 
+                            id="regNombre" 
                             name="nombre" 
                             placeholder="Tu nombre"
                             required
                         >
                     </div>
                     <div class="form-group">
-                        <label for="apellido">Apellido</label>
+                        <label for="regApellido">Apellido</label>
                         <input 
                             type="text" 
-                            id="apellido" 
+                            id="regApellido" 
                             name="apellido" 
                             placeholder="Tu apellido"
                             required
@@ -87,10 +87,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="email">Correo Electrónico</label>
+                    <label for="regEmail">Correo Electrónico</label>
                     <input 
                         type="email" 
-                        id="email" 
+                        id="regEmail" 
                         name="email" 
                         placeholder="tu@email.com"
                         required
@@ -99,19 +99,19 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="telefono">Teléfono</label>
+                        <label for="regTelefono">Teléfono</label>
                         <input 
                             type="tel" 
-                            id="telefono" 
+                            id="regTelefono" 
                             name="telefono" 
                             placeholder="+1234567890"
                         >
                     </div>
                     <div class="form-group">
-                        <label for="username">Nombre de Usuario</label>
+                        <label for="regUsername">Nombre de Usuario</label>
                         <input 
                             type="text" 
-                            id="username" 
+                            id="regUsername" 
                             name="username" 
                             placeholder="usuario123"
                             required
@@ -121,10 +121,10 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="password">Contraseña</label>
+                        <label for="regPassword">Contraseña</label>
                         <input 
                             type="password" 
-                            id="password" 
+                            id="regPassword" 
                             name="password" 
                             placeholder="••••••••"
                             required
@@ -147,20 +147,19 @@
                     <span id="registerBtnLoader" class="loader" style="display: none;"></span>
                 </button>
 
-                <div id="errorMessage" class="error-message" style="display: none;"></div>
-                <div id="successMessage" class="success-message" style="display: none;"></div>
+                <div id="regErrorMessage" class="error-message" style="display: none;"></div>
+                <div id="regSuccessMessage" class="success-message" style="display: none;"></div>
             </form>
 
             <div class="form-toggle">
-                <p>¿No tienes una cuenta? <button type="button" id="toggleRegister">Regístrate aquí</button></p>
-                <p style="display: none;">¿Ya tienes una cuenta? <button type="button" id="toggleLogin">Inicia sesión</button></p>
+                <p id="toggleToRegister">¿No tienes una cuenta? <button type="button" id="toggleRegister">Regístrate aquí</button></p>
+                <p id="toggleToLogin" style="display: none;">¿Ya tienes una cuenta? <button type="button" id="toggleLogin">Inicia sesión</button></p>
             </div>
         </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/config.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/url-manager.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/login-security.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
     <script src="{{ url_for('static', filename='js/login.js') }}"></script>
 </body>
