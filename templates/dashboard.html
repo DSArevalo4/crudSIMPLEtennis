@@ -317,8 +317,8 @@
             </div>
             
             <div class="modal-body">
-                <!-- Botón para crear nuevo usuario -->
-                <div class="action-bar">
+                <!-- Botón para crear nuevo usuario - Oculto por defecto, solo visible para administradores -->
+                <div class="action-bar" id="createUsuarioBtn" style="display: none;">
                     <button class="btn btn-primary" onclick="openCreateUsuarioForm()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -412,16 +412,40 @@
             if (user) {
                 document.getElementById('userName').textContent = `${user.nombre} ${user.apellido}`;
                 document.getElementById('userEmail').textContent = user.email;
-                document.getElementById('userRole').textContent = user.perfil;
+                
+                // Mostrar botón de crear usuario solo para administradores
+                if (isAdmin()) {
+                    const createBtn = document.getElementById('createUsuarioBtn');
+                    if (createBtn) {
+                        createBtn.style.display = 'block';
+                    }
+                }
             }
         });
 
         // Variables globales para gestión de usuarios
         let currentEditingUserId = null;
 
+        // Función para verificar si el usuario es administrador
+        function isAdmin() {
+            const user = auth.getUser();
+            return user && user.perfil === 'administrador';
+        }
+
         // Funciones para manejar el modal de usuarios
         function openUsuariosModal() {
             document.getElementById('usuariosModal').style.display = 'flex';
+            
+            // Verificar permisos y mostrar/ocultar botón de crear
+            const createBtn = document.getElementById('createUsuarioBtn');
+            if (createBtn) {
+                if (isAdmin()) {
+                    createBtn.style.display = 'block';
+                } else {
+                    createBtn.style.display = 'none';
+                }
+            }
+            
             loadUsuarios();
         }
 
@@ -430,10 +454,16 @@
         }
 
         function openCreateUsuarioForm() {
+            if (!isAdmin()) {
+                alert('No tienes permisos para crear usuarios');
+                return;
+            }
+            
             currentEditingUserId = null;
             document.getElementById('usuarioFormTitle').textContent = 'Crear Usuario';
             document.getElementById('usuarioForm').reset();
             document.getElementById('usuarioPassword').required = true;
+            document.getElementById('usuarioPassword').placeholder = '';
             document.getElementById('usuarioFormModal').style.display = 'flex';
         }
 
@@ -443,6 +473,11 @@
         }
 
         function openEditUsuarioForm(usuario) {
+            if (!isAdmin()) {
+                alert('No tienes permisos para editar usuarios');
+                return;
+            }
+            
             currentEditingUserId = usuario.id;
             document.getElementById('usuarioFormTitle').textContent = 'Editar Usuario';
             
@@ -456,6 +491,7 @@
             
             // La contraseña no es requerida para edición
             document.getElementById('usuarioPassword').required = false;
+            document.getElementById('usuarioPassword').value = '';
             document.getElementById('usuarioPassword').placeholder = 'Dejar vacío para mantener la contraseña actual';
             
             document.getElementById('usuarioFormModal').style.display = 'flex';
@@ -483,37 +519,52 @@
                 return;
             }
 
-            usuariosList.innerHTML = usuarios.map(usuario => `
-                <div class="usuario-item">
-                    <div class="usuario-info">
-                        <div class="usuario-name">${usuario.nombre} ${usuario.apellido}</div>
-                        <div class="usuario-details">
-                            <strong>Email:</strong> ${usuario.email} | 
-                            <strong>Username:</strong> ${usuario.username} | 
-                            <strong>Perfil:</strong> ${usuario.perfil} | 
-                            <strong>Estado:</strong> ${usuario.activo ? 'Activo' : 'Inactivo'}
+            // Verificar si el usuario actual es administrador
+            const esAdmin = isAdmin();
+
+            usuariosList.innerHTML = usuarios.map(usuario => {
+                // Generar botones de acción solo si es administrador
+                const botonesAccion = esAdmin ? `
+                    <button class="btn-icon btn-edit" onclick='openEditUsuarioForm(${JSON.stringify(usuario)})' title="Editar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                    <button class="btn-icon btn-delete" onclick="deleteUsuario(${usuario.id})" title="Eliminar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3,6 5,6 21,6"></polyline>
+                            <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                        </svg>
+                    </button>
+                ` : '';
+
+                return `
+                    <div class="usuario-item">
+                        <div class="usuario-info">
+                            <div class="usuario-name">${usuario.nombre} ${usuario.apellido}</div>
+                            <div class="usuario-details">
+                                <strong>Email:</strong> ${usuario.email} | 
+                                <strong>Username:</strong> ${usuario.username} | 
+                                <strong>Perfil:</strong> ${usuario.perfil} | 
+                                <strong>Estado:</strong> ${usuario.activo ? 'Activo' : 'Inactivo'}
+                            </div>
+                        </div>
+                        <div class="usuario-actions">
+                            ${botonesAccion}
                         </div>
                     </div>
-                    <div class="usuario-actions">
-                        <button class="btn-icon btn-edit" onclick="openEditUsuarioForm(${JSON.stringify(usuario).replace(/"/g, '&quot;')})" title="Editar">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                        </button>
-                        <button class="btn-icon btn-delete" onclick="deleteUsuario(${usuario.id})" title="Eliminar">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="3,6 5,6 21,6"></polyline>
-                                <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // Eliminar usuario
         async function deleteUsuario(usuarioId) {
+            if (!isAdmin()) {
+                alert('No tienes permisos para eliminar usuarios');
+                return;
+            }
+            
             if (!confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
                 return;
             }
@@ -530,6 +581,11 @@
         // Manejar envío del formulario de usuario
         document.getElementById('usuarioForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            if (!isAdmin()) {
+                alert('No tienes permisos para gestionar usuarios');
+                return;
+            }
             
             const formData = new FormData(e.target);
             const usuarioData = {
