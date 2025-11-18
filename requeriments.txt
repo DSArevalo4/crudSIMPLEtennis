@@ -5,3 +5,4 @@ requests
 Flask-JWT-Extended
 bcrypt
 python-dotenv
+flask_cors

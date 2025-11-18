@@ -4,13 +4,55 @@ let currentEditingTorneoId = null;
 // Cargar lista de torneos
 async function loadTorneos() {
     const torneosList = document.getElementById('torneosList');
+    if (!torneosList) {
+        console.error('Elemento torneosList no encontrado');
+        return;
+    }
+    
     torneosList.innerHTML = '<div class="loading">Cargando torneos...</div>';
+    
+    // Configurar UI según el perfil del usuario
+    setupTorneosUI();
     
     try {
         const torneos = await api.getTorneos();
         renderTorneos(torneos);
     } catch (error) {
+        console.error('Error cargando torneos:', error);
         torneosList.innerHTML = `<div class="error">Error al cargar torneos: ${error.message}</div>`;
+    }
+}
+
+// Configurar UI de torneos según el perfil del usuario
+function setupTorneosUI() {
+    const user = auth.getUser();
+    const headerActions = document.getElementById('torneos-header-actions');
+    const subtitle = document.getElementById('torneos-subtitle');
+    
+    if (!user || !headerActions) return;
+    
+    const isDeportista = user.perfil === 'deportista';
+    
+    if (isDeportista) {
+        // Deportistas: no muestran botón "Nuevo Torneo" y cambiar subtítulo
+        headerActions.innerHTML = '';
+        if (subtitle) {
+            subtitle.textContent = 'Mis Torneos Inscritos';
+        }
+    } else {
+        // Administradores y profesores: mostrar botón "Nuevo Torneo"
+        headerActions.innerHTML = `
+            <button class="btn btn-primary" onclick="openTorneoForm()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Nuevo Torneo
+            </button>
+        `;
+        if (subtitle) {
+            subtitle.textContent = 'Gestión de Torneos de Tenis';
+        }
     }
 }
 
@@ -22,6 +64,10 @@ function renderTorneos(torneos) {
         torneosList.innerHTML = '<div class="empty-state">No hay torneos registrados</div>';
         return;
     }
+
+    // Obtener perfil del usuario
+    const user = auth.getUser();
+    const isDeportista = user && user.perfil === 'deportista';
 
     torneosList.innerHTML = torneos.map(torneo => `
         <div class="torneo-card">
@@ -71,6 +117,7 @@ function renderTorneos(torneos) {
                     </svg>
                     Ver
                 </button>
+                ${!isDeportista ? `
                 <button class="btn btn-sm btn-secondary" onclick="editTorneo(${torneo.id})">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -85,6 +132,7 @@ function renderTorneos(torneos) {
                     </svg>
                     Eliminar
                 </button>
+                ` : ''}
             </div>
         </div>
     `).join('');
@@ -92,23 +140,33 @@ function renderTorneos(torneos) {
 
 // Abrir formulario de torneo
 function openTorneoForm(torneo = null) {
-    currentEditingTorneoId = torneo ? torneo.id : null;
-    
     const modal = document.getElementById('torneoFormModal');
     const title = document.getElementById('torneoFormTitle');
     const form = document.getElementById('torneoForm');
     
+    if (!modal || !title || !form) {
+        console.error('Elementos del modal de torneo no encontrados');
+        return;
+    }
+    
+    currentEditingTorneoId = torneo ? torneo.id : null;
+    
     if (torneo) {
         title.textContent = 'Editar Torneo';
         document.getElementById('torneoNombre').value = torneo.nombre || '';
+        document.getElementById('torneoTipo').value = torneo.tipo || '';
         document.getElementById('torneoSuperficie').value = torneo.superficie || '';
-        document.getElementById('torneoNivel').value = torneo.nivel || '';
-        document.getElementById('torneoFecha').value = torneo.fecha || '';
-        document.getElementById('torneoHora').value = torneo.hora || '';
+        document.getElementById('torneoFechaInicio').value = torneo.fecha_inicio || '';
+        document.getElementById('torneoFechaFin').value = torneo.fecha_fin || '';
+        document.getElementById('torneoEstado').value = torneo.estado || 'planificado';
+        document.getElementById('torneoMaxParticipantes').value = torneo.max_participantes || 32;
         document.getElementById('torneoDescripcion').value = torneo.descripcion || '';
     } else {
         title.textContent = 'Crear Torneo';
         form.reset();
+        // Valores por defecto
+        document.getElementById('torneoEstado').value = 'planificado';
+        document.getElementById('torneoMaxParticipantes').value = 32;
     }
     
     modal.style.display = 'flex';
@@ -116,7 +174,10 @@ function openTorneoForm(torneo = null) {
 
 // Cerrar formulario de torneo
 function closeTorneoFormModal() {
-    document.getElementById('torneoFormModal').style.display = 'none';
+    const modal = document.getElementById('torneoFormModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
     currentEditingTorneoId = null;
 }
 
@@ -126,6 +187,7 @@ async function editTorneo(torneoId) {
         const torneo = await api.getTorneo(torneoId);
         openTorneoForm(torneo);
     } catch (error) {
+        console.error('Error cargando torneo:', error);
         alert(`Error al cargar torneo: ${error.message}`);
     }
 }
@@ -141,6 +203,7 @@ async function deleteTorneo(torneoId) {
         loadTorneos(); // Recargar la lista
         alert('Torneo eliminado exitosamente');
     } catch (error) {
+        console.error('Error eliminando torneo:', error);
         alert(`Error al eliminar torneo: ${error.message}`);
     }
 }
@@ -154,6 +217,7 @@ async function viewTorneo(torneoId) {
         // Mostrar modal de cuadro de tenis
         showTennisBracket(torneo, inscripciones);
     } catch (error) {
+        console.error('Error cargando torneo:', error);
         alert(`Error al cargar torneo: ${error.message}`);
     }
 }
@@ -163,6 +227,11 @@ function showTennisBracket(torneo, inscripciones) {
     const modal = document.getElementById('tennisBracketModal');
     const title = document.getElementById('bracketTitle');
     const container = document.getElementById('tennisBracketContainer');
+    
+    if (!modal || !title || !container) {
+        console.error('Elementos del modal de bracket no encontrados');
+        return;
+    }
     
     title.textContent = `Cuadro de Tenis - ${torneo.nombre}`;
     
@@ -254,50 +323,8 @@ function getPlayerForSlot(inscripciones, round, slot, totalSlots) {
 
 // Cerrar modal de cuadro de tenis
 function closeTennisBracketModal() {
-    document.getElementById('tennisBracketModal').style.display = 'none';
+    const modal = document.getElementById('tennisBracketModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
-
-// Manejar envío del formulario de torneo
-document.getElementById('torneoForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const torneoData = {
-        nombre: formData.get('nombre'),
-        superficie: formData.get('superficie'),
-        nivel: formData.get('nivel'),
-        fecha: formData.get('fecha'),
-        hora: formData.get('hora'),
-        descripcion: formData.get('descripcion')
-    };
-
-    try {
-        if (currentEditingTorneoId) {
-            // Actualizar torneo existente
-            await api.updateTorneo(currentEditingTorneoId, torneoData);
-            alert('Torneo actualizado exitosamente');
-        } else {
-            // Crear nuevo torneo
-            await api.createTorneo(torneoData);
-            alert('Torneo creado exitosamente');
-        }
-        
-        closeTorneoFormModal();
-        loadTorneos(); // Recargar la lista
-    } catch (error) {
-        alert(`Error: ${error.message}`);
-    }
-});
-
-// Cerrar modales al hacer clic fuera de ellos
-window.addEventListener('click', function(e) {
-    const torneoFormModal = document.getElementById('torneoFormModal');
-    const tennisBracketModal = document.getElementById('tennisBracketModal');
-    
-    if (e.target === torneoFormModal) {
-        closeTorneoFormModal();
-    }
-    if (e.target === tennisBracketModal) {
-        closeTennisBracketModal();
-    }
-});

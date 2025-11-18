@@ -8,6 +8,7 @@ from controllers.inscripcion_controller import inscripcion_bp
 from controllers.cuadro_controller import cuadro_bp
 from controllers.notificacion_controller import notificacion_bp
 from controllers.auth_controller import auth_bp, register_jwt_error_handlers
+from controllers.ranking_controller import ranking_bp  # <-- nueva importación
 from middleware.auth_middleware import require_auth, require_admin, require_profesor_or_admin
 from config.jwt_config import JWT_SECRET_KEY, JWT_ACCESS_TOKEN_EXPIRES
 from config.security_config import get_security_config, get_cors_config
@@ -47,12 +48,13 @@ def set_security_headers(response):
 
 # Registrar todos los blueprints
 app.register_blueprint(auth_bp, url_prefix='/api')
-app.register_blueprint(torneo_bp, url_prefix='/api')
+app.register_blueprint(torneo_bp, url_prefix='/api')  # <-- blueprint de torneos (implementación en controllers/torneo_controller.py)
 app.register_blueprint(partido_bp, url_prefix='/api')
 app.register_blueprint(usuario_bp, url_prefix='/api')
 app.register_blueprint(inscripcion_bp, url_prefix='/api')
 app.register_blueprint(cuadro_bp, url_prefix='/api')
 app.register_blueprint(notificacion_bp, url_prefix='/api')
+app.register_blueprint(ranking_bp, url_prefix='/api')  # <-- registrar nuevo blueprint
 
 # Rutas del Dashboard
 @app.route('/')
@@ -67,13 +69,28 @@ def login():
 
 @app.route('/dashboard')
 def dashboard():
-    """Dashboard principal"""
-    return render_template('dashboard.html')
+    """Dashboard principal - redirigir a / para SPA"""
+    return redirect('/', code=302)
 
 @app.route('/torneos')
 def torneos():
-    """Página de torneos"""
-    return render_template('torneos.html')
+    """Página de torneos - redirigir a / para SPA"""
+    return redirect('/', code=302)
+
+@app.route('/partidos')
+def partidos():
+    """Página de partidos - redirigir a / para SPA"""
+    return redirect('/', code=302)
+
+@app.route('/inscripciones')
+def inscripciones():
+    """Página de inscripciones - redirigir a / para SPA"""
+    return redirect('/', code=302)
+
+@app.route('/notificaciones')
+def notificaciones():
+    """Página de notificaciones - redirigir a / para SPA"""
+    return redirect('/', code=302)
 
 @app.route('/api/dashboard/stats')
 @require_auth
@@ -123,183 +140,11 @@ def dashboard_stats():
         return jsonify({'error': str(e)}), 500
 
 # API endpoints para torneos
-@app.route('/api/torneos', methods=['GET'])
-@require_auth
-def get_torneos():
-    """Obtener lista de torneos"""
-    try:
-        session = get_db_session()
-        torneos = session.query(Torneo).all()
-        
-        torneos_data = []
-        for torneo in torneos:
-            # Contar inscripciones
-            inscripciones_count = session.query(Inscripcion).filter(
-                Inscripcion.torneo_id == torneo.id
-            ).count()
-            
-            torneo_dict = torneo.as_dict()
-            torneo_dict['inscripciones_count'] = inscripciones_count
-            torneos_data.append(torneo_dict)
-        
-        session.close()
-        return jsonify(torneos_data)
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/torneos/<int:torneo_id>', methods=['GET'])
-@require_auth
-def get_torneo(torneo_id):
-    """Obtener un torneo específico"""
-    try:
-        session = get_db_session()
-        torneo = session.query(Torneo).filter(Torneo.id == torneo_id).first()
-        
-        if not torneo:
-            return jsonify({'error': 'Torneo no encontrado'}), 404
-        
-        torneo_dict = torneo.as_dict()
-        session.close()
-        return jsonify(torneo_dict)
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/torneos', methods=['POST'])
-@require_auth
-def create_torneo():
-    """Crear nuevo torneo"""
-    try:
-        data = request.get_json()
-        
-        # Validar campos requeridos
-        required_fields = ['nombre', 'superficie', 'nivel', 'fecha']
-        for field in required_fields:
-            if not data.get(field):
-                return jsonify({'error': f'El campo {field} es obligatorio'}), 400
-        
-        session = get_db_session()
-        
-        # Crear nuevo torneo
-        torneo = Torneo(
-            nombre=data['nombre'],
-            superficie=data['superficie'],
-            nivel=data['nivel'],
-            fecha=data['fecha'],
-            hora=data.get('hora'),
-            descripcion=data.get('descripcion'),
-            estado='pendiente'
-        )
-        
-        session.add(torneo)
-        session.commit()
-        session.refresh(torneo)
-        
-        torneo_dict = torneo.as_dict()
-        session.close()
-        
-        return jsonify(torneo_dict), 201
-        
-    except Exception as e:
-        session.rollback()
-        session.close()
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/torneos/<int:torneo_id>', methods=['PUT'])
-@require_auth
-def update_torneo(torneo_id):
-    """Actualizar torneo"""
-    try:
-        data = request.get_json()
-        session = get_db_session()
-        
-        torneo = session.query(Torneo).filter(Torneo.id == torneo_id).first()
-        if not torneo:
-            return jsonify({'error': 'Torneo no encontrado'}), 404
-        
-        # Actualizar campos
-        if 'nombre' in data:
-            torneo.nombre = data['nombre']
-        if 'superficie' in data:
-            torneo.superficie = data['superficie']
-        if 'nivel' in data:
-            torneo.nivel = data['nivel']
-        if 'fecha' in data:
-            torneo.fecha = data['fecha']
-        if 'hora' in data:
-            torneo.hora = data['hora']
-        if 'descripcion' in data:
-            torneo.descripcion = data['descripcion']
-        if 'estado' in data:
-            torneo.estado = data['estado']
-        
-        session.commit()
-        torneo_dict = torneo.as_dict()
-        session.close()
-        
-        return jsonify(torneo_dict)
-        
-    except Exception as e:
-        session.rollback()
-        session.close()
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/torneos/<int:torneo_id>', methods=['DELETE'])
-@require_auth
-def delete_torneo(torneo_id):
-    """Eliminar torneo"""
-    try:
-        session = get_db_session()
-        
-        torneo = session.query(Torneo).filter(Torneo.id == torneo_id).first()
-        if not torneo:
-            return jsonify({'error': 'Torneo no encontrado'}), 404
-        
-        # Eliminar inscripciones relacionadas
-        session.query(Inscripcion).filter(Inscripcion.torneo_id == torneo_id).delete()
-        
-        # Eliminar torneo
-        session.delete(torneo)
-        session.commit()
-        session.close()
-        
-        return jsonify({'message': 'Torneo eliminado exitosamente'})
-        
-    except Exception as e:
-        session.rollback()
-        session.close()
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/torneos/<int:torneo_id>/inscripciones', methods=['GET'])
-@require_auth
-def get_inscripciones_by_torneo(torneo_id):
-    """Obtener inscripciones de un torneo específico"""
-    try:
-        session = get_db_session()
-        
-        # Verificar que el torneo existe
-        torneo = session.query(Torneo).filter(Torneo.id == torneo_id).first()
-        if not torneo:
-            return jsonify({'error': 'Torneo no encontrado'}), 404
-        
-        # Obtener inscripciones con información del deportista
-        inscripciones = session.query(Inscripcion, Usuario).join(
-            Usuario, Inscripcion.deportista_id == Usuario.id
-        ).filter(Inscripcion.torneo_id == torneo_id).all()
-        
-        inscripciones_data = []
-        for inscripcion, usuario in inscripciones:
-            inscripcion_dict = inscripcion.as_dict()
-            inscripcion_dict['deportista_nombre'] = f"{usuario.nombre} {usuario.apellido}"
-            inscripcion_dict['deportista_email'] = usuario.email
-            inscripciones_data.append(inscripcion_dict)
-        
-        session.close()
-        return jsonify(inscripciones_data)
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+# ---------------------------------------------------------
+# Endpoints de torneos movidos a controllers/torneo_controller.py
+# Se eliminó la implementación inline de:
+#   get_inscripciones_by_torneo(...) y demás endpoints de /api/torneos
+# ---------------------------------------------------------
 
 HTML = '''<!DOCTYPE html>
 <html lang="es">
@@ -314,6 +159,8 @@ HTML = '''<!DOCTYPE html>
             --berenjena: #A0006D;
             --gris: #f4f4f4;
             --borde: #e0e0e0;
+            --panel-bg: #ffffff;
+            --panel-shadow: 0 10px 30px rgba(0,0,0,0.12);
         }
         body {
             font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
@@ -431,11 +278,81 @@ HTML = '''<!DOCTYPE html>
             color: #222;
             word-break: break-all;
         }
-        @media (max-width: 700px) {
-            .container { max-width: 98vw; padding: 1em 0.5em; }
-            .navbar { flex-direction: column; align-items: flex-start; padding: 1em 1em; }
-            .main-btns { flex-direction: column; gap: 1em; }
+        .detail-pane {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 400px;
+            height: 100vh;
+            background: var(--panel-bg);
+            box-shadow: var(--panel-shadow);
+            padding: 1.5em;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            z-index: 2000;
         }
+        .detail-pane.active {
+            right: 0;
+        }
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1em;
+        }
+        .detail-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--azul-real);
+        }
+        .detail-close {
+            border: none;
+            background: transparent;
+            font-size: 1.8em;
+            cursor: pointer;
+            color: var(--berenjena);
+        }
+        .detail-section {
+            margin-bottom: 1.2em;
+        }
+        .detail-section h4 {
+            margin: 0 0 0.4em 0;
+            color: #444;
+            font-size: 1em;
+        }
+        .detail-chip {
+            display: inline-block;
+            padding: 0.35em 0.75em;
+            background: var(--azul-palido);
+            border-radius: 999px;
+            margin-right: 0.4em;
+            font-size: 0.85em;
+        }
+        .detail-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .detail-list li {
+            padding: 0.45em 0;
+            border-bottom: 1px solid var(--borde);
+            font-size: 0.95em;
+        }
+        .modal-overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(16,37,94,0.32); z-index: 2500; }
+        .modal-overlay.active { display: flex; }
+        .modal-card { width: min(760px, 94vw); max-height: 88vh; background: #fff; border-radius: 22px; padding: 1.8em; box-shadow: 0 20px 48px rgba(0,0,0,0.18); display: flex; flex-direction: column; gap: 1em; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 1.5em; color: var(--azul-real); font-weight: 600; }
+        .modal-close { border: none; background: transparent; color: var(--berenjena); font-size: 1.9em; cursor: pointer; }
+        .inscripciones-grid { overflow-y: auto; flex: 1; display: grid; gap: 0.85em; padding-right: 0.5em; }
+        .inscripcion-card { border: 1px solid var(--borde); border-radius: 16px; padding: 1em; box-shadow: 0 12px 20px rgba(74,139,223,0.08); display: grid; gap: 0.6em; }
+        .chip { display: inline-flex; align-items: center; padding: 0.35em 0.75em; border-radius: 999px; font-size: 0.8em; font-weight: 600; text-transform: uppercase; }
+        .chip.pendiente { background: #fff4d6; color: #b37a00; }
+        .chip.aceptada { background: #e6f9ed; color: #1e8a4c; }
+        .chip.rechazada { background: #fde4ea; color: #b0374b; }
+        .toolbar { display: flex; justify-content: flex-end; gap: 0.6em; }
+        .btn-ghost { border: 1px solid var(--azul-real); background: transparent; color: var(--azul-real); border-radius: 10px; padding: 0.45em 1.1em; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -445,6 +362,7 @@ HTML = '''<!DOCTYPE html>
     <div class="main-btns">
         <button class="main-btn" onclick="showSection('torneos')">Torneos</button>
         <button class="main-btn" onclick="showSection('partidos')">Partidos</button>
+        <button class="main-btn" onclick="openInscripciones()">Inscripciones</button>
     </div>
     <div class="container">
         <div id="torneos-section" style="display:none">
@@ -478,6 +396,46 @@ HTML = '''<!DOCTYPE html>
         </div>
         <div id="result" class="result" style="display:none"></div>
     </div>
+    <aside id="torneo-detail" class="detail-pane">
+        <div class="detail-header">
+            <div class="detail-title">Detalle del torneo</div>
+            <button class="detail-close" onclick="closeTorneoPanel()">×</button>
+        </div>
+        <div id="torneo-detail-body">
+            <p style="color:#666">Selecciona un torneo para ver más información.</p>
+        </div>
+    </aside>
+    <div id="inscripciones-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">Gestión de Inscripciones</div>
+                <button class="modal-close" onclick="closeInscripciones()">×</button>
+            </div>
+            <div class="toolbar">
+                <button class="btn-ghost" onclick="loadInscripciones()">Refrescar</button>
+                <button class="btn-crear" style="width:auto" onclick="toggleInscripcionForm(true)">+ Nueva inscripción</button>
+            </div>
+            <form id="inscripcion-form" class="form-modal" style="margin:0;">
+                <input type="hidden" id="inscripcion-id">
+                <label>Torneo ID: <input id="inscripcion-torneo" required></label>
+                <label>Deportista ID: <input id="inscripcion-deportista" required></label>
+                <label>Estado:
+                    <select id="inscripcion-estado">
+                        <option value="pendiente">Pendiente</option>
+                        <option value="aceptada">Aceptada</option>
+                        <option value="rechazada">Rechazada</option>
+                    </select>
+                </label>
+                <div class="toolbar" style="justify-content:flex-start;">
+                    <button type="submit" class="btn-crear" style="width:auto;">Guardar</button>
+                    <button type="button" class="btn-eliminar" style="width:auto;" onclick="toggleInscripcionForm(false)">Cancelar</button>
+                </div>
+            </form>
+            <div id="inscripciones-list" class="inscripciones-grid">
+                <p style="color:#666;">Cargando inscripciones...</p>
+            </div>
+        </div>
+    </div>
     <script>
         function showSection(section) {
             document.getElementById('torneos-section').style.display = section === 'torneos' ? 'block' : 'none';
@@ -493,8 +451,9 @@ HTML = '''<!DOCTYPE html>
                 data.forEach(t=>{
                     const div = document.createElement('div');
                     div.className = 'item';
-                    div.innerHTML = `<div class='item-info'><b>${t.nombre}</b> (${t.nivel})<br><small>${t.superficie} - ${t.fecha||''}</small></div>
+                    div.innerHTML = `<div class='item-info'><b>${t.nombre}</b> (${t.nivel||t.tipo||'N/A'})<br><small>${t.superficie} - ${t.fecha||t.fecha_inicio||''}</small></div>
                         <div class='item-actions'>
+                            <button class='btn-editar' onclick='openTorneoPanel(${t.id})'>Ver</button>
                             <button class='btn-editar' onclick='editTorneo(${JSON.stringify(t)})'>Editar</button>
                             <button class='btn-eliminar' onclick='deleteTorneo("${t.id}")'>Eliminar</button>
                         </div>`;
@@ -546,7 +505,7 @@ HTML = '''<!DOCTYPE html>
                 .then(r=>r.text()).then(msg=>{ showResult(msg); closeTorneoForm(); loadTorneos(); });
         };
         function loadPartidos() {
-            fetch('/api/partidos').then(r=>r.json()).then(data=>{
+            fetch('/api/partidos').then r=>r.json()).then(data=>{
                 const list = document.getElementById('partidos-list');
                 list.innerHTML = '';
                 data.forEach(p=>{
@@ -611,6 +570,152 @@ HTML = '''<!DOCTYPE html>
             r.innerText = msg;
             r.style.display = 'block';
             setTimeout(()=>{r.style.display='none';}, 4000);
+        }
+        function openTorneoPanel(id) {
+            const panel = document.getElementById('torneo-detail');
+            const body = document.getElementById('torneo-detail-body');
+            panel.classList.add('active');
+            body.innerHTML = '<p style="color:#666">Cargando información...</p>';
+            Promise.all([
+                fetch(`/api/torneos/${id}`).then(r=>r.json()),
+                fetch(`/api/torneos/${id}/inscripciones`).then(r=>r.json())
+            ]).then(([torneo, inscripciones])=>{
+                if (torneo.error) throw torneo.error;
+                const chips = [
+                    torneo.superficie ? `<span class="detail-chip">${torneo.superficie}</span>` : '',
+                    (torneo.tipo || torneo.nivel) ? `<span class="detail-chip">${torneo.tipo||torneo.nivel}</span>` : '',
+                    torneo.estado ? `<span class="detail-chip">${torneo.estado}</span>` : ''
+                ].join('');
+                const inscList = inscripciones.length
+                    ? `<ul class="detail-list">${inscripciones.map(i=>`<li>${i.deportista_nombre||'Inscrito ID '+i.deportista_id} <small>(${i.estado})</small></li>`).join('')}</ul>`
+                    : '<p style="color:#777">Sin inscripciones registradas.</p>';
+                body.innerHTML = `
+                    <div class="detail-section">
+                        <h4>Nombre</h4>
+                        <p><strong>${torneo.nombre}</strong></p>
+                        ${chips}
+                    </div>
+                    <div class="detail-section">
+                        <h4>Fechas</h4>
+                        <p>Inicio: ${torneo.fecha||torneo.fecha_inicio||'N/D'}</p>
+                        <p>Fin: ${torneo.fecha_fin||'N/D'}</p>
+                    </div>
+                    <div class="detail-section">
+                        <h4>Profesor asignado</h4>
+                        <p>${torneo.profesor_nombre||'Por asignar'} (ID ${torneo.profesor_id||'N/D'})</p>
+                    </div>
+                    <div class="detail-section">
+                        <h4>Descripción</h4>
+                        <p>${torneo.descripcion||'Sin descripción.'}</p>
+                    </div>
+                    <div class="detail-section">
+                        <h4>Inscripciones (${inscripciones.length})</h4>
+                        ${inscList}
+                    </div>
+                `;
+            }).catch(err=>{
+                body.innerHTML = `<p style="color:#c00">Error cargando detalles: ${err}</p>`;
+            });
+        }
+        function closeTorneoPanel() {
+            document.getElementById('torneo-detail').classList.remove('active');
+        }
+        function openInscripciones() {
+            document.getElementById('inscripciones-modal').classList.add('active');
+            toggleInscripcionForm(false);
+            loadInscripciones();
+        }
+        function closeInscripciones() {
+            document.getElementById('inscripciones-modal').classList.remove('active');
+        }
+        function toggleInscripcionForm(show) {
+            const form = document.getElementById('inscripcion-form');
+            form.classList.toggle('active', show);
+            if (!show) {
+                form.reset();
+                document.getElementById('inscripcion-id').value = '';
+            }
+        }
+        function loadInscripciones(params = {}) {
+            const query = new URLSearchParams(params).toString();
+            fetch(`/api/inscripciones${query ? '?' + query : ''}`)
+                .then(r => r.json())
+                .then(data => renderInscripciones(Array.isArray(data) ? data : []))
+                .catch(() => renderInscripciones([]));
+        }
+        function renderInscripciones(inscripciones) {
+            const cont = document.getElementById('inscripciones-list');
+            if (!inscripciones.length) {
+                cont.innerHTML = '<p style="color:#777;">Sin inscripciones registradas.</p>';
+                return;
+            }
+            cont.innerHTML = inscripciones.map(insc => `
+                <div class="inscripcion-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <strong>${insc.deportista_nombre || ('Deportista #' + insc.deportista_id)}</strong>
+                            <div style="color:#777;font-size:0.9em;">${insc.deportista_email || ''}</div>
+                        </div>
+                        <span class="chip ${insc.estado}">${insc.estado}</span>
+                    </div>
+                    <div style="color:#444;">Torneo: <strong>${insc.torneo_nombre || ('ID ' + insc.torneo_id)}</strong> · Estado torneo: ${insc.torneo_estado || 'N/D'}</div>
+                    <div style="color:#666;font-size:0.85em;">Inscripción: ${insc.fecha_inscripcion ? new Date(insc.fecha_inscripcion).toLocaleString() : 'N/D'}</div>
+                    <div style="display:flex;gap:0.5em;flex-wrap:wrap;">
+                        <button class="btn-mini accept" onclick="actualizarInscripcion(${insc.id}, 'aceptada')">Aceptar</button>
+                        <button class="btn-mini reject" onclick="actualizarInscripcion(${insc.id}, 'rechazada')">Rechazar</button>
+                        <button class="btn-mini edit" onclick='editarInscripcion(${JSON.stringify(insc)})'>Editar</button>
+                        <button class="btn-mini delete" onclick="eliminarInscripcion(${insc.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        document.getElementById('inscripcion-form').onsubmit = function (e) {
+            e.preventDefault();
+            const id = document.getElementById('inscripcion-id').value;
+            const payload = {
+                torneo_id: document.getElementById('inscripcion-torneo').value,
+                deportista_id: document.getElementById('inscripcion-deportista').value,
+                estado: document.getElementById('inscripcion-estado').value
+            };
+            const url = id ? `/api/inscripciones/${id}` : '/api/inscripciones';
+            const method = id ? 'PUT' : 'POST';
+            fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+                .then(r => r.ok ? r.json() : r.json().then(err => Promise.reject(err)))
+                .then(() => {
+                    showResult('Inscripción guardada');
+                    toggleInscripcionForm(false);
+                    loadInscripciones();
+                })
+                .catch(err => showResult(err.error || 'Error al guardar'));
+        };
+        function editarInscripcion(insc) {
+            toggleInscripcionForm(true);
+            document.getElementById('inscripcion-id').value = insc.id;
+            document.getElementById('inscripcion-torneo').value = insc.torneo_id;
+            document.getElementById('inscripcion-deportista').value = insc.deportista_id;
+            document.getElementById('inscripcion-estado').value = insc.estado;
+        }
+        function actualizarInscripcion(id, estado) {
+            fetch(`/api/inscripciones/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado })
+            }).then(r => r.ok ? r.json() : r.json().then(err => Promise.reject(err)))
+             .then(() => {
+                 showResult('Estado actualizado');
+                 loadInscripciones();
+             })
+             .catch(err => showResult(err.error || 'Error actualizando estado'));
+        }
+        function eliminarInscripcion(id) {
+            if (!confirm('¿Eliminar inscripción?')) return;
+            fetch(`/api/inscripciones/${id}`, { method: 'DELETE' })
+                .then(r => r.ok ? r.json() : r.json().then(err => Promise.reject(err)))
+                .then(() => {
+                    showResult('Inscripción eliminada');
+                    loadInscripciones();
+                })
+                .catch(err => showResult(err.error || 'Error eliminando inscripción'));
         }
     </script>
 </body>

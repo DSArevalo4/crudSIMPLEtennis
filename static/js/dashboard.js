@@ -156,3 +156,73 @@ document.addEventListener('DOMContentLoaded', function() {
   // Start the dashboard
   initDashboard()
 })
+
+// Función para cargar partidos (llamada desde navegación SPA)
+async function loadPartidos() {
+  const partidosList = document.getElementById('partidosList');
+  if (!partidosList) return;
+  
+  partidosList.innerHTML = '<div class="loading">Cargando partidos...</div>';
+  
+  try {
+    const partidos = await api.getPartidos();
+    renderPartidos(partidos);
+  } catch (error) {
+    partidosList.innerHTML = `<div class="error">Error al cargar partidos: ${error.message}</div>`;
+  }
+}
+
+// Renderizar lista de partidos
+function renderPartidos(partidos) {
+  const partidosList = document.getElementById('partidosList');
+  
+  if (partidos.length === 0) {
+    partidosList.innerHTML = '<div class="empty-state">No hay partidos registrados</div>';
+    return;
+  }
+
+  partidosList.innerHTML = partidos.map(partido => `
+    <div class="torneo-card">
+      <div class="torneo-header">
+        <h3 class="torneo-nombre">Partido #${partido.id}</h3>
+      </div>
+      
+      <div class="torneo-details">
+        <div class="detail-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+          </svg>
+          <span>Ganador ID: ${partido.ganador_id}</span>
+        </div>
+        
+        <div class="detail-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+          </svg>
+          <span>Perdedor ID: ${partido.perdedor_id}</span>
+        </div>
+        
+        <div class="detail-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span>${partido.fecha || 'Sin fecha'}</span>
+        </div>
+        
+        <div class="detail-item">
+          <span><strong>Resultado:</strong> ${partido.resultado || 'N/A'}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openPartidoForm() {
+  alert('Formulario de partido en desarrollo');
+}
+

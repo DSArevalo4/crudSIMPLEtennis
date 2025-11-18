@@ -50,17 +50,33 @@ def login():
     """
     try:
         data = request.get_json()
+        # Soportar login por `email`, `username` o `identifier` (que puede ser email o username)
         email = data.get('email')
+        username = data.get('username')
+        identifier = data.get('identifier')
         password = data.get('password')
 
-        if not email or not password:
-            logger.warning("Login fallido: email o contraseña no proporcionados")
+        if not password or (not email and not username and not identifier):
+            logger.warning("Login fallido: identificador o contraseña no proporcionados")
             return jsonify({
-                'error': 'El email y la contraseña son obligatorios'
+                'error': 'El email/usuario y la contraseña son obligatorios'
             }), 400
 
         service = AuthService(get_db_session())
-        usuario = service.authenticate_user_by_email(email, password)
+
+        usuario = None
+
+        # Priorizar email si se envía
+        if email:
+            usuario = service.authenticate_user_by_email(email, password)
+        elif identifier:
+            # Si el identifier contiene '@' asumimos email, sino username
+            if '@' in identifier:
+                usuario = service.authenticate_user_by_email(identifier, password)
+            else:
+                usuario = service.authenticate_user(identifier, password)
+        elif username:
+            usuario = service.authenticate_user(username, password)
 
         if usuario:
             access_token = service.create_access_token(usuario)

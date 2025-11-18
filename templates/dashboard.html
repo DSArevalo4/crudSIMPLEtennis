@@ -77,7 +77,7 @@
             </div>
 
             <nav class="sidebar-nav">
-                <a href="/dashboard" class="nav-item active">
+                <a href="#" class="nav-item active" data-section="dashboard" onclick="navigateToSection('dashboard', event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7"/>
                         <rect x="14" y="3" width="7" height="7"/>
@@ -86,21 +86,21 @@
                     </svg>
                     <span>Dashboard</span>
                 </a>
-                <a href="/torneos" class="nav-item" onclick="navigateToTorneos(event)">
+                <a href="#" class="nav-item" data-section="torneos" onclick="navigateToSection('torneos', event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                         <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
                     </svg>
                     <span>Torneos</span>
                 </a>
-                <a href="/partidos" class="nav-item">
+                <a href="#" class="nav-item" data-section="partidos" onclick="navigateToSection('partidos', event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"/>
                         <path d="M12 6v6l4 2"/>
                     </svg>
                     <span>Partidos</span>
                 </a>
-                <a href="/inscripciones" class="nav-item">
+                <a href="#" class="nav-item" data-section="inscripciones" onclick="navigateToSection('inscripciones', event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="8.5" cy="7" r="4"/>
@@ -118,7 +118,7 @@
                     </svg>
                     <span>Usuarios</span>
                 </a>
-                <a href="/notificaciones" class="nav-item">
+                <a href="#" class="nav-item" data-section="notificaciones" onclick="navigateToSection('notificaciones', event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                         <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
@@ -163,6 +163,8 @@
 
         <!-- Main Content -->
         <main class="main-content">
+            <!-- Dashboard Section -->
+            <div id="section-dashboard" class="app-section active">
             <header class="page-header">
                 <div class="header-left">
                     <h1>Dashboard</h1>
@@ -305,6 +307,88 @@
                     </div>
                 </div>
             </div>
+            </div>
+            <!-- End Dashboard Section -->
+
+            <!-- Torneos Section -->
+            <div id="section-torneos" class="app-section">
+            <header class="page-header">
+                <div class="header-left">
+                    <h1>Torneos</h1>
+                    <p class="subtitle" id="torneos-subtitle">Gestión de Torneos de Tenis</p>
+                </div>
+                <div class="header-right" id="torneos-header-actions">
+                    <!-- El botón se mostrará dinámicamente según el rol -->
+                </div>
+            </header>
+
+            <!-- Torneos List -->
+            <div class="torneos-container">
+                <div class="torneos-list" id="torneosList">
+                    <div class="loading">Cargando torneos...</div>
+                </div>
+            </div>
+            </div>
+            <!-- End Torneos Section -->
+
+            <!-- Partidos Section -->
+            <div id="section-partidos" class="app-section">
+            <header class="page-header">
+                <div class="header-left">
+                    <h1>Partidos</h1>
+                    <p class="subtitle">Gestión de Partidos</p>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" onclick="openPartidoForm()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Nuevo Partido
+                    </button>
+                </div>
+            </header>
+
+            <!-- Partidos List -->
+            <div class="partidos-container">
+                <div class="partidos-list" id="partidosList">
+                    <div class="loading">Cargando partidos...</div>
+                </div>
+            </div>
+            </div>
+            <!-- End Partidos Section -->
+
+            <!-- Inscripciones Section -->
+            <!-- Inscripciones Section -->
+            <div id="section-inscripciones" class="app-section">
+                <header class="page-header">
+                    <div class="header-left">
+                        <h1>Inscripciones</h1>
+                        <p class="subtitle">Gestión de Inscripciones</p>
+                    </div>
+                    <div class="header-actions">
+                        <!-- Botones dinámicos según el rol -->
+                    </div>
+                </header>
+                <div class="inscripciones-container">
+                    <!-- Los filtros y tabla se generan dinámicamente -->
+                </div>
+            </div>
+            <!-- End Inscripciones Section -->
+
+            <!-- Notificaciones Section -->
+            <div id="section-notificaciones" class="app-section">
+            <header class="page-header">
+                <div class="header-left">
+                    <h1>Notificaciones</h1>
+                    <p class="subtitle">Centro de Notificaciones</p>
+                </div>
+            </header>
+            <div class="notificaciones-container">
+                <p>Sección de notificaciones en desarrollo...</p>
+            </div>
+            </div>
+            <!-- End Notificaciones Section -->
         </main>
     </div>
 
@@ -331,6 +415,95 @@
                 <!-- Lista de usuarios -->
                 <div class="usuarios-list" id="usuariosList">
                     <div class="loading">Cargando usuarios...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Formulario de Torneo -->
+    <div id="torneoFormModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="torneoFormTitle">Crear Torneo</h2>
+                <button class="close-btn" onclick="closeTorneoFormModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="torneoForm">
+                    <div class="form-group">
+                        <label for="torneoNombre">Nombre del Torneo *</label>
+                        <input type="text" id="torneoNombre" name="nombre" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="torneoTipo">Tipo de Torneo *</label>
+                        <select id="torneoTipo" name="tipo" required>
+                            <option value="">Seleccionar tipo</option>
+                            <option value="abierto">Abierto</option>
+                            <option value="cerrado">Cerrado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="torneoSuperficie">Superficie *</label>
+                        <select id="torneoSuperficie" name="superficie" required>
+                            <option value="">Seleccionar superficie</option>
+                            <option value="Arcilla">Arcilla</option>
+                            <option value="Césped">Césped</option>
+                            <option value="Dura">Dura</option>
+                            <option value="Sintética">Sintética</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="torneoFechaInicio">Fecha de Inicio *</label>
+                        <input type="date" id="torneoFechaInicio" name="fecha_inicio" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="torneoFechaFin">Fecha de Fin</label>
+                        <input type="date" id="torneoFechaFin" name="fecha_fin">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="torneoEstado">Estado *</label>
+                        <select id="torneoEstado" name="estado" required>
+                            <option value="planificado">Planificado</option>
+                            <option value="en_curso">En Curso</option>
+                            <option value="finalizado">Finalizado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="torneoMaxParticipantes">Máximo de Participantes *</label>
+                        <input type="number" id="torneoMaxParticipantes" name="max_participantes" min="2" max="128" value="32" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="torneoDescripcion">Descripción</label>
+                        <textarea id="torneoDescripcion" name="descripcion" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeTorneoFormModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="torneoSubmitBtn">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Cuadro de Tenis -->
+    <div id="tennisBracketModal" class="modal" style="display: none;">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2 id="bracketTitle">Cuadro de Tenis</h2>
+                <button class="close-btn" onclick="closeTennisBracketModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="tennis-bracket-container" id="tennisBracketContainer">
+                    <!-- El cuadro de tenis se generará aquí dinámicamente -->
                 </div>
             </div>
         </div>
@@ -394,12 +567,133 @@
         </div>
     </div>
 
+    <!-- Modal de Formulario de Inscripción -->
+    <div id="inscripcionFormModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="inscripcionFormTitle">Nueva Inscripción</h2>
+                <button class="close-btn" onclick="closeInscripcionModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="inscripcionForm" onsubmit="event.preventDefault(); saveInscripcion();">
+                    <div class="form-group">
+                        <label for="inscripcion-torneo">Torneo *</label>
+                        <select id="inscripcion-torneo" name="torneo_id" required>
+                            <option value="">Seleccione un torneo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="deportista-group">
+                        <label for="inscripcion-deportista">Deportista *</label>
+                        <select id="inscripcion-deportista" name="deportista_id">
+                            <option value="">Seleccione un deportista</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeInscripcionModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='js/config.js') }}"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/torneos.js') }}?v=2"></script>
+    <script src="{{ url_for('static', filename='js/inscripciones.js') }}?v=3"></script>
     
     <script>
+        // Sistema de navegación SPA
+        let currentSection = 'dashboard';
+
+        function navigateToSection(sectionName, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            // No cambiar si ya estamos en la sección
+            if (currentSection === sectionName) {
+                return;
+            }
+
+            // Ocultar sección actual
+            const currentSectionEl = document.getElementById(`section-${currentSection}`);
+            if (currentSectionEl) {
+                currentSectionEl.classList.remove('active');
+            }
+
+            // Remover clase active de todos los nav-items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Mostrar nueva sección
+            const newSectionEl = document.getElementById(`section-${sectionName}`);
+            if (newSectionEl) {
+                newSectionEl.classList.add('active');
+            }
+
+            // Agregar clase active al nav-item correspondiente
+            const navItem = document.querySelector(`[data-section="${sectionName}"]`);
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+
+            // Actualizar sección actual
+            currentSection = sectionName;
+
+            // Cargar datos según la sección
+            loadSectionData(sectionName);
+
+            // NO cambiar la URL ni el historial
+            // Mantener siempre en '/'
+            if (window.location.pathname !== '/') {
+                history.replaceState(null, null, '/');
+            }
+        }
+
+        function loadSectionData(sectionName) {
+            switch(sectionName) {
+                case 'torneos':
+                    if (typeof loadTorneos === 'function') {
+                        loadTorneos();
+                    }
+                    break;
+                case 'partidos':
+                    if (typeof loadPartidos === 'function') {
+                        loadPartidos();
+                    }
+                    break;
+                case 'inscripciones':
+                    if (typeof setupInscripcionesUI === 'function') {
+                        setupInscripcionesUI();
+                    }
+                    break;
+                case 'dashboard':
+                    // Dashboard ya se carga automáticamente
+                    break;
+            }
+        }
+
+        // Prevenir navegación hacia atrás
+        window.addEventListener('popstate', function(event) {
+            if (auth.isAuthenticated()) {
+                event.preventDefault();
+                history.pushState(null, null, '/');
+            }
+        });
+
+        // Asegurar que siempre estemos en '/'
+        if (window.location.pathname !== '/') {
+            history.replaceState(null, null, '/');
+        }
+
         // Manejar logout
         document.getElementById('logoutBtn').addEventListener('click', function(e) {
             e.preventDefault();
@@ -625,6 +919,8 @@
         window.addEventListener('click', function(e) {
             const usuariosModal = document.getElementById('usuariosModal');
             const usuarioFormModal = document.getElementById('usuarioFormModal');
+            const torneoFormModal = document.getElementById('torneoFormModal');
+            const tennisBracketModal = document.getElementById('tennisBracketModal');
             
             if (e.target === usuariosModal) {
                 closeUsuariosModal();
@@ -632,15 +928,47 @@
             if (e.target === usuarioFormModal) {
                 closeUsuarioFormModal();
             }
+            if (e.target === torneoFormModal) {
+                closeTorneoFormModal();
+            }
+            if (e.target === tennisBracketModal) {
+                closeTennisBracketModal();
+            }
         });
 
-        // Función para navegar a torneos
-        function navigateToTorneos(event) {
-            event.preventDefault();
-            // Limpiar URL y navegar
-            history.replaceState(null, null, '/');
-            window.location.href = '/torneos';
-        }
+        // Manejar envío del formulario de torneo
+        document.getElementById('torneoForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const torneoData = {
+                nombre: formData.get('nombre'),
+                tipo: formData.get('tipo'),
+                superficie: formData.get('superficie'),
+                fecha_inicio: formData.get('fecha_inicio'),
+                fecha_fin: formData.get('fecha_fin'),
+                estado: formData.get('estado'),
+                max_participantes: parseInt(formData.get('max_participantes')),
+                descripcion: formData.get('descripcion')
+            };
+
+            try {
+                if (currentEditingTorneoId) {
+                    // Actualizar torneo existente
+                    await api.updateTorneo(currentEditingTorneoId, torneoData);
+                    alert('Torneo actualizado exitosamente');
+                } else {
+                    // Crear nuevo torneo
+                    await api.createTorneo(torneoData);
+                    alert('Torneo creado exitosamente');
+                }
+                
+                closeTorneoFormModal();
+                loadTorneos(); // Recargar la lista
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
     </script>
 </body>
 </html>
