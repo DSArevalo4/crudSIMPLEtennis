@@ -1,8 +1,7 @@
 // Gestión de Inscripciones
-let inscripciones = [];
-let torneosDisponibles = [];
+let torneosParaInscripcion = [];
 let deportistas = [];
-let currentInscripcion = null;
+let torneoSeleccionado = null;
 
 async function setupInscripcionesUI() {
     const user = auth.getUser();
@@ -11,118 +10,59 @@ async function setupInscripcionesUI() {
         return;
     }
 
-    const headerActions = document.querySelector('#section-inscripciones .header-actions');
     const subtitle = document.querySelector('#section-inscripciones .subtitle');
 
-    if (!headerActions || !subtitle) {
+    if (!subtitle) {
         console.error('Elementos de UI de inscripciones no encontrados');
         return;
     }
 
     // Configurar UI según el rol
     if (user.perfil === 'deportista') {
-        // Deportistas solo pueden inscribirse a sí mismos
-        headerActions.innerHTML = `
-            <button class="btn-primary" onclick="openInscripcionFormAsync()">
-                <i class="icon">➕</i> Nueva Inscripción
-            </button>
-        `;
-        subtitle.textContent = 'Mis Inscripciones';
+        subtitle.textContent = 'Torneos Disponibles para Inscripción';
     } else if (user.perfil === 'administrador' || user.perfil === 'profesor') {
-        // Admin y profesores pueden inscribir a cualquier deportista
-        headerActions.innerHTML = `
-            <button class="btn-primary" onclick="openInscripcionFormAsync()">
-                <i class="icon">➕</i> Nueva Inscripción
-            </button>
-        `;
-        subtitle.textContent = 'Gestión de Inscripciones';
-    }
-
-    // Agregar filtros solo si no existen
-    let filterSection = document.querySelector('#section-inscripciones .filter-section');
-    if (!filterSection) {
-        filterSection = document.createElement('div');
-        filterSection.className = 'filter-section';
-        filterSection.innerHTML = `
-            <div class="filter-group">
-                <label for="filter-estado">Estado:</label>
-                <select id="filter-estado" onchange="loadInscripciones()">
-                    <option value="">Todos</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="aceptada">Aceptada</option>
-                    <option value="rechazada">Rechazada</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="filter-torneo">Torneo:</label>
-                <select id="filter-torneo" onchange="loadInscripciones()">
-                    <option value="">Todos</option>
-                </select>
-            </div>
-        `;
-
-        const container = document.querySelector('#section-inscripciones .inscripciones-container');
-        if (container) {
-            container.insertBefore(filterSection, container.firstChild);
-        }
+        subtitle.textContent = 'Gestión de Inscripciones a Torneos';
     }
 
     // Cargar datos iniciales
     await Promise.all([
-        loadInscripciones(),
-        loadTorneosDisponibles(),
+        loadTorneosParaInscripcion(),
         loadDeportistas()
     ]);
     
-    console.log('Inscripciones UI configurada. Torneos:', torneosDisponibles.length, 'Deportistas:', deportistas.length);
+    console.log('Inscripciones UI configurada. Torneos:', torneosParaInscripcion.length, 'Deportistas:', deportistas.length);
 }
 
-async function loadInscripciones() {
+async function loadTorneosParaInscripcion() {
     try {
-        const filterEstado = document.getElementById('filter-estado')?.value || '';
-        const filterTorneo = document.getElementById('filter-torneo')?.value || '';
-
-        let url = '/api/inscripciones?';
-        if (filterEstado) url += `estado=${filterEstado}&`;
-        if (filterTorneo) url += `torneo_id=${filterTorneo}&`;
-
-        const response = await api.get(url);
+        const user = auth.getUser();
+        console.log('Cargando torneos para:', user.perfil);
+        
+        // Para admin/profesor: cargar todos los torneos
+        // Para deportista: cargar solo torneos disponibles (abiertos y no inscritos)
+        const endpoint = user.perfil === 'deportista' 
+            ? '/api/inscripciones/torneos-disponibles'
+            : '/api/torneos';
+        
+        console.log('Endpoint a llamar:', endpoint);
+        const response = await api.get(endpoint);
+        console.log('Response status:', response.status, response.ok);
+        
         if (!response.ok) {
-            throw new Error('Error al cargar inscripciones');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Error al cargar torneos');
         }
 
-        inscripciones = await response.json();
-        renderInscripciones();
+        const allTorneos = await response.json();
+        console.log('Torneos recibidos del backend:', allTorneos);
+        
+        // Filtrar solo torneos planificados
+        torneosParaInscripcion = allTorneos.filter(t => t.estado === 'planificado');
+        console.log('Torneos planificados filtrados:', torneosParaInscripcion);
+
+        renderTorneosInscripcion();
     } catch (error) {
-        console.error('Error cargando inscripciones:', error);
-        showNotification('Error al cargar inscripciones: ' + error.message, 'error');
-    }
-}
-
-async function loadTorneosDisponibles() {
-    try {
-        const response = await api.get('/api/inscripciones/torneos-disponibles');
-        if (!response.ok) {
-            throw new Error('Error al cargar torneos');
-        }
-
-        torneosDisponibles = await response.json();
-        console.log('Torneos disponibles cargados:', torneosDisponibles);
-
-        // Actualizar select de filtro
-        const filterTorneo = document.getElementById('filter-torneo');
-        if (filterTorneo) {
-            // Mantener opción "Todos"
-            filterTorneo.innerHTML = '<option value="">Todos</option>';
-            torneosDisponibles.forEach(torneo => {
-                const option = document.createElement('option');
-                option.value = torneo.id;
-                option.textContent = torneo.nombre;
-                filterTorneo.appendChild(option);
-            });
-        }
-    } catch (error) {
-        console.error('Error cargando torneos disponibles:', error);
+        console.error('Error cargando torneos:', error);
         showNotification('Error al cargar torneos: ' + error.message, 'error');
     }
 }
@@ -145,169 +85,145 @@ async function loadDeportistas() {
     }
 }
 
-function renderInscripciones() {
+function renderTorneosInscripcion() {
     const container = document.querySelector('#section-inscripciones .inscripciones-container');
-    if (!container) return;
-
-    const user = auth.getUser();
-
-    // Buscar o crear la tabla
-    let tableContainer = container.querySelector('.table-container');
-    if (!tableContainer) {
-        tableContainer = document.createElement('div');
-        tableContainer.className = 'table-container';
-        container.appendChild(tableContainer);
+    if (!container) {
+        console.error('Container de inscripciones no encontrado');
+        return;
     }
 
-    if (!inscripciones || inscripciones.length === 0) {
-        tableContainer.innerHTML = '<p class="no-data">No hay inscripciones registradas</p>';
+    const user = auth.getUser();
+    console.log('Renderizando torneos. Total:', torneosParaInscripcion.length);
+
+    if (!torneosParaInscripcion || torneosParaInscripcion.length === 0) {
+        container.innerHTML = '<p class="no-data">No hay torneos planificados disponibles para inscripción</p>';
         return;
     }
 
     const html = `
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Torneo</th>
-                    <th>Deportista</th>
-                    <th>Fecha Inscripción</th>
-                    <th>Estado</th>
-                    ${user.perfil !== 'deportista' ? '<th>Acciones</th>' : ''}
-                </tr>
-            </thead>
-            <tbody>
-                ${inscripciones.map(inscripcion => `
-                    <tr>
-                        <td>${inscripcion.id}</td>
-                        <td>${inscripcion.torneo_nombre || 'N/A'}</td>
-                        <td>${inscripcion.deportista_nombre || 'N/A'}</td>
-                        <td>${formatDate(inscripcion.fecha_inscripcion)}</td>
-                        <td>
-                            <span class="badge badge-${getEstadoBadgeClass(inscripcion.estado)}">
-                                ${inscripcion.estado}
+        <div class="torneos-grid">
+            ${torneosParaInscripcion.map(torneo => {
+                const cuposDisponibles = torneo.cupos_disponibles !== undefined 
+                    ? torneo.cupos_disponibles 
+                    : (torneo.max_participantes || 32);
+                
+                return `
+                    <div class="torneo-card-inscripcion">
+                        <div class="torneo-card-header">
+                            <h3>${torneo.nombre}</h3>
+                            <span class="badge badge-${torneo.tipo === 'abierto' ? 'success' : 'secondary'}">
+                                ${torneo.tipo || 'abierto'}
                             </span>
-                        </td>
-                        ${user.perfil !== 'deportista' ? `
-                            <td class="action-buttons">
-                                ${inscripcion.estado === 'pendiente' ? `
-                                    <button class="btn-success btn-sm" onclick="updateEstado(${inscripcion.id}, 'aceptada')" title="Aceptar">
-                                        ✓
-                                    </button>
-                                    <button class="btn-danger btn-sm" onclick="updateEstado(${inscripcion.id}, 'rechazada')" title="Rechazar">
-                                        ✗
-                                    </button>
-                                ` : ''}
-                                <button class="btn-danger btn-sm" onclick="deleteInscripcion(${inscripcion.id})" title="Eliminar">
-                                    🗑️
+                        </div>
+                        <div class="torneo-card-body">
+                            <div class="torneo-info">
+                                <p><strong>Superficie:</strong> ${torneo.superficie}</p>
+                                <p><strong>Fecha Inicio:</strong> ${formatDateShort(torneo.fecha_inicio)}</p>
+                                ${torneo.fecha_fin ? `<p><strong>Fecha Fin:</strong> ${formatDateShort(torneo.fecha_fin)}</p>` : ''}
+                                <p><strong>Estado:</strong> 
+                                    <span class="badge badge-${getEstadoTorneoBadgeClass(torneo.estado)}">
+                                        ${torneo.estado || 'planificado'}
+                                    </span>
+                                </p>
+                                <p><strong>Cupos Disponibles:</strong> ${cuposDisponibles} / ${torneo.max_participantes || 32}</p>
+                                ${torneo.descripcion ? `<p class="torneo-descripcion">${torneo.descripcion}</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="torneo-card-footer">
+                            ${user.perfil === 'deportista' ? `
+                                <button class="btn-primary btn-block" onclick="inscribirmeATorneo(${torneo.id})">
+                                    ➕ Inscribirme
                                 </button>
-                            </td>
-                        ` : ''}
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
+                            ` : `
+                                <button class="btn-primary btn-block" onclick="abrirModalInscribirDeportista(${torneo.id})">
+                                    👥 Inscribir Deportistas
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
     `;
 
-    tableContainer.innerHTML = html;
+    container.innerHTML = html;
 }
 
-// Función asíncrona para abrir el formulario
-async function openInscripcionFormAsync() {
-    // Asegurar que los datos estén cargados
-    if (torneosDisponibles.length === 0 || deportistas.length === 0) {
-        console.log('Cargando datos antes de abrir modal...');
-        await Promise.all([
-            loadTorneosDisponibles(),
-            loadDeportistas()
-        ]);
+// Inscribir al deportista actual (deportista se inscribe a sí mismo)
+async function inscribirmeATorneo(torneoId) {
+    if (!confirm('¿Confirmas tu inscripción a este torneo?')) {
+        return;
     }
-    
-    openInscripcionForm();
+
+    try {
+        const user = auth.getUser();
+        
+        // Para deportistas, enviar solo torneo_id (el backend asigna automáticamente el deportista_id)
+        const data = {
+            torneo_id: torneoId
+        };
+
+        console.log('Datos de inscripción a enviar:', data);
+        const response = await api.post('/api/inscripciones', data);
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Error al crear inscripción');
+        }
+
+        const result = await response.json();
+        console.log('Inscripción creada:', result);
+        
+        showNotification('¡Te has inscrito exitosamente al torneo!', 'success');
+        await loadTorneosParaInscripcion();
+    } catch (error) {
+        console.error('Error inscribiendo:', error);
+        showNotification(error.message, 'error');
+    }
 }
 
-function openInscripcionForm() {
-    const user = auth.getUser();
+// Abrir modal para que admin/profesor seleccione deportista
+async function abrirModalInscribirDeportista(torneoId) {
+    // Asegurar que los deportistas estén cargados
+    if (deportistas.length === 0) {
+        await loadDeportistas();
+    }
+
+    torneoSeleccionado = torneoId;
     const modal = document.getElementById('inscripcionFormModal');
-    if (!modal) {
+    const deportistaSelect = document.getElementById('inscripcion-deportista');
+    const torneoInfo = document.getElementById('torneo-inscripcion-info');
+    
+    if (!modal || !deportistaSelect) {
         console.error('Modal de inscripción no encontrado');
         return;
     }
 
-    console.log('Abriendo modal. Torneos disponibles:', torneosDisponibles.length, 'Deportistas:', deportistas.length);
-
-    currentInscripcion = null;
+    // Buscar el torneo seleccionado
+    const torneo = torneosParaInscripcion.find(t => t.id === torneoId);
     
-    // Configurar formulario según el rol
-    const deportistaGroup = document.getElementById('deportista-group');
-    const torneoSelect = document.getElementById('inscripcion-torneo');
-    const deportistaSelect = document.getElementById('inscripcion-deportista');
+    if (torneoInfo && torneo) {
+        torneoInfo.innerHTML = `
+            <div class="torneo-selected-info">
+                <h4>${torneo.nombre}</h4>
+                <p><strong>Tipo:</strong> ${torneo.tipo} | <strong>Superficie:</strong> ${torneo.superficie}</p>
+            </div>
+        `;
+    }
 
-    if (user.perfil === 'deportista') {
-        // Deportista: ocultar selector de deportista, solo selecciona torneo
-        if (deportistaGroup) deportistaGroup.style.display = 'none';
-        
-        // Quitar required del selector de deportista
-        if (deportistaSelect) {
-            deportistaSelect.removeAttribute('required');
-        }
-        
-        // Llenar torneos disponibles (solo abiertos)
-        if (torneoSelect) {
-            torneoSelect.innerHTML = '<option value="">Seleccione un torneo</option>';
-            const torneosDisponiblesDeportista = torneosDisponibles.filter(t => !t.ya_inscrito && t.cupos_disponibles > 0);
-            
-            if (torneosDisponiblesDeportista.length === 0) {
-                torneoSelect.innerHTML += '<option value="" disabled>No hay torneos disponibles</option>';
-            } else {
-                torneosDisponiblesDeportista.forEach(torneo => {
-                    const option = document.createElement('option');
-                    option.value = torneo.id;
-                    option.textContent = `${torneo.nombre} (${torneo.cupos_disponibles} cupos disponibles)`;
-                    torneoSelect.appendChild(option);
-                });
-            }
-        }
+    // Llenar deportistas
+    deportistaSelect.innerHTML = '<option value="">Seleccione un deportista</option>';
+    
+    if (deportistas.length === 0) {
+        deportistaSelect.innerHTML += '<option value="" disabled>No hay deportistas disponibles</option>';
     } else {
-        // Admin/Profesor: mostrar selector de deportista
-        if (deportistaGroup) deportistaGroup.style.display = 'block';
-        
-        // Agregar required al selector de deportista
-        if (deportistaSelect) {
-            deportistaSelect.setAttribute('required', 'required');
-        }
-        
-        // Llenar torneos disponibles
-        if (torneoSelect) {
-            torneoSelect.innerHTML = '<option value="">Seleccione un torneo</option>';
-            
-            if (torneosDisponibles.length === 0) {
-                torneoSelect.innerHTML += '<option value="" disabled>No hay torneos disponibles</option>';
-            } else {
-                torneosDisponibles.forEach(torneo => {
-                    const option = document.createElement('option');
-                    option.value = torneo.id;
-                    option.textContent = `${torneo.nombre} - ${torneo.tipo} (${torneo.cupos_disponibles} cupos disponibles)`;
-                    torneoSelect.appendChild(option);
-                });
-            }
-        }
-
-        // Llenar deportistas
-        if (deportistaSelect) {
-            deportistaSelect.innerHTML = '<option value="">Seleccione un deportista</option>';
-            
-            if (deportistas.length === 0) {
-                deportistaSelect.innerHTML += '<option value="" disabled>No hay deportistas disponibles</option>';
-            } else {
-                deportistas.forEach(deportista => {
-                    const option = document.createElement('option');
-                    option.value = deportista.id;
-                    option.textContent = `${deportista.nombre} ${deportista.apellido}`;
-                    deportistaSelect.appendChild(option);
-                });
-            }
-        }
+        deportistas.forEach(deportista => {
+            const option = document.createElement('option');
+            option.value = deportista.id;
+            option.textContent = `${deportista.nombre} ${deportista.apellido}`;
+            deportistaSelect.appendChild(option);
+        });
     }
 
     modal.style.display = 'block';
@@ -318,35 +234,25 @@ function closeInscripcionModal() {
     if (modal) {
         modal.style.display = 'none';
     }
-    currentInscripcion = null;
+    torneoSeleccionado = null;
 }
 
-async function saveInscripcion() {
+async function saveInscripcionAdmin() {
     try {
-        const user = auth.getUser();
-        const torneoId = document.getElementById('inscripcion-torneo')?.value;
-        let deportistaId = null;
-
-        if (user.perfil === 'deportista') {
-            // El deportista se inscribe a sí mismo
-            deportistaId = user.id;
-        } else {
-            // Admin/Profesor selecciona el deportista
-            deportistaId = document.getElementById('inscripcion-deportista')?.value;
-        }
-
-        if (!torneoId) {
-            showNotification('Debe seleccionar un torneo', 'error');
-            return;
-        }
+        const deportistaId = document.getElementById('inscripcion-deportista')?.value;
 
         if (!deportistaId) {
             showNotification('Debe seleccionar un deportista', 'error');
             return;
         }
 
+        if (!torneoSeleccionado) {
+            showNotification('Error: No se ha seleccionado un torneo', 'error');
+            return;
+        }
+
         const data = {
-            torneo_id: parseInt(torneoId),
+            torneo_id: parseInt(torneoSeleccionado),
             deportista_id: parseInt(deportistaId)
         };
 
@@ -357,63 +263,32 @@ async function saveInscripcion() {
             throw new Error(error.error || 'Error al crear inscripción');
         }
 
-        showNotification('Inscripción creada exitosamente', 'success');
+        showNotification('Deportista inscrito exitosamente', 'success');
         closeInscripcionModal();
-        await Promise.all([
-            loadInscripciones(),
-            loadTorneosDisponibles()
-        ]);
+        await loadTorneosParaInscripcion();
     } catch (error) {
         console.error('Error guardando inscripción:', error);
         showNotification(error.message, 'error');
     }
 }
 
-async function updateEstado(inscripcionId, nuevoEstado) {
-    if (!confirm(`¿Está seguro de ${nuevoEstado === 'aceptada' ? 'aceptar' : 'rechazar'} esta inscripción?`)) {
-        return;
-    }
-
-    try {
-        const response = await api.put(`/api/inscripciones/${inscripcionId}`, {
-            estado: nuevoEstado
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Error al actualizar inscripción');
-        }
-
-        showNotification(`Inscripción ${nuevoEstado} exitosamente`, 'success');
-        await loadInscripciones();
-    } catch (error) {
-        console.error('Error actualizando estado:', error);
-        showNotification(error.message, 'error');
-    }
+function getEstadoTorneoBadgeClass(estado) {
+    const classes = {
+        'planificado': 'warning',
+        'en_curso': 'success',
+        'finalizado': 'secondary'
+    };
+    return classes[estado] || 'secondary';
 }
 
-async function deleteInscripcion(inscripcionId) {
-    if (!confirm('¿Está seguro de eliminar esta inscripción?')) {
-        return;
-    }
-
-    try {
-        const response = await api.delete(`/api/inscripciones/${inscripcionId}`);
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Error al eliminar inscripción');
-        }
-
-        showNotification('Inscripción eliminada exitosamente', 'success');
-        await Promise.all([
-            loadInscripciones(),
-            loadTorneosDisponibles()
-        ]);
-    } catch (error) {
-        console.error('Error eliminando inscripción:', error);
-        showNotification(error.message, 'error');
-    }
+function formatDateShort(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
 }
 
 function getEstadoBadgeClass(estado) {

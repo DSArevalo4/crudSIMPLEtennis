@@ -16,7 +16,7 @@ ESTADOS_VALIDOS = {'pendiente', 'aceptada', 'rechazada'}
 def listar_torneos_disponibles():
     """
     Lista torneos disponibles para inscripción según el rol del usuario.
-    - Deportistas: solo torneos abiertos
+    - Deportistas: solo torneos abiertos donde NO está inscrito
     - Admin/Profesor: todos los torneos
     """
     session = get_db_session()
@@ -48,6 +48,10 @@ def listar_torneos_disponibles():
                 Inscripcion.torneo_id == torneo.id,
                 Inscripcion.deportista_id == user_id if usuario.perfil == 'deportista' else None
             ).first() is not None if usuario.perfil == 'deportista' else False
+            
+            # Si es deportista y ya está inscrito, NO incluir el torneo
+            if usuario.perfil == 'deportista' and ya_inscrito:
+                continue
             
             torneo_dict = torneo.as_dict()
             torneo_dict['inscripciones_actuales'] = inscripciones_count

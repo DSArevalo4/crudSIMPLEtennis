@@ -571,29 +571,26 @@
     <div id="inscripcionFormModal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="inscripcionFormTitle">Nueva Inscripción</h2>
+                <h2 id="inscripcionFormTitle">Inscribir Deportista</h2>
                 <button class="close-btn" onclick="closeInscripcionModal()">&times;</button>
             </div>
             
             <div class="modal-body">
-                <form id="inscripcionForm" onsubmit="event.preventDefault(); saveInscripcion();">
+                <div id="torneo-inscripcion-info" class="torneo-selected-info">
+                    <!-- Info del torneo seleccionado -->
+                </div>
+                
+                <form id="inscripcionForm" onsubmit="event.preventDefault(); saveInscripcionAdmin();">
                     <div class="form-group">
-                        <label for="inscripcion-torneo">Torneo *</label>
-                        <select id="inscripcion-torneo" name="torneo_id" required>
-                            <option value="">Seleccione un torneo</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group" id="deportista-group">
-                        <label for="inscripcion-deportista">Deportista *</label>
-                        <select id="inscripcion-deportista" name="deportista_id">
+                        <label for="inscripcion-deportista">Seleccione el Deportista *</label>
+                        <select id="inscripcion-deportista" name="deportista_id" required>
                             <option value="">Seleccione un deportista</option>
                         </select>
                     </div>
                     
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeInscripcionModal()">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <button type="submit" class="btn btn-primary">Inscribir</button>
                     </div>
                 </form>
             </div>
@@ -602,10 +599,10 @@
 
     <script src="{{ url_for('static', filename='js/config.js') }}"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/api.js') }}?v=2"></script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
     <script src="{{ url_for('static', filename='js/torneos.js') }}?v=2"></script>
-    <script src="{{ url_for('static', filename='js/inscripciones.js') }}?v=3"></script>
+    <script src="{{ url_for('static', filename='js/inscripciones.js') }}?v=6"></script>
     
     <script>
         // Sistema de navegación SPA

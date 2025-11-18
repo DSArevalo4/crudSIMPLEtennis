@@ -1,20 +1,20 @@
-# 🎾 Sistema de Gestión de Torneos de Tenis - ATP Tour 2004
+# 🎾 Sistema de Gestión de Torneos de Tenis
 
 <div align="center">
 
-![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)
-![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-red.svg)
-![JWT](https://img.shields.io/badge/JWT-Auth-orange.svg)
+![Python](https://img.shields.io/badge/Python-3.12-blue.svg)
+![Flask](https://img.shields.io/badge/Flask-3.1-green.svg)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-red.svg)
+![JWT](https://img.shields.io/badge/JWT-Extended-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-Sistema completo de gestión de torneos de tenis con autenticación JWT, gestión de usuarios, torneos, inscripciones y partidos.
+**Sistema web profesional para la gestión integral de torneos de tenis con autenticación JWT, roles de usuario, inscripciones automáticas y cuadros de eliminación.**
 
 [Características](#-características-principales) •
-[Instalación](#-instalación) •
-[Configuración](#️-configuración) •
-[API](#-api-endpoints) •
-[Seguridad](#-seguridad)
+[Demo](#-demo) •
+[Instalación](#-instalación-rápida) •
+[API](#-api-rest) •
+[Documentación](#-documentación)
 
 </div>
 
@@ -22,246 +22,436 @@ Sistema completo de gestión de torneos de tenis con autenticación JWT, gestió
 
 ## 📋 Tabla de Contenidos
 
-- [Descripción](#-descripción)
+- [Descripción General](#-descripción-general)
 - [Características Principales](#-características-principales)
-- [Tecnologías](#-tecnologías-utilizadas)
-- [Arquitectura](#-arquitectura-del-proyecto)
-- [Instalación](#-instalación)
+- [Demo en Video](#-demo)
+- [Tecnologías](#-stack-tecnológico)
+- [Instalación Rápida](#-instalación-rápida)
 - [Configuración](#️-configuración)
-- [Uso](#-uso)
-- [API Endpoints](#-api-endpoints)
+- [Guía de Usuario](#-guía-de-usuario)
+- [API REST](#-api-rest)
+- [Arquitectura](#-arquitectura)
 - [Seguridad](#-seguridad)
 - [Testing](#-testing)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Contribución](#-contribución)
-- [Licencia](#-licencia)
+- [Despliegue](#-despliegue)
+- [Contribuir](#-contribuir)
 
 ---
 
-## 🎯 Descripción
+## 🎯 Descripción General
 
-Sistema web completo para la gestión de torneos de tenis inspirado en el ATP Tour 2004. Permite a profesores organizar torneos, a deportistas inscribirse y participar, y a administradores gestionar todo el sistema. Incluye funcionalidades de cuadros de eliminación, seguimiento de partidos, y un dashboard interactivo.
+**crudSIMPLEtennis** es una aplicación web completa para la gestión profesional de torneos de tenis. Diseñada con arquitectura moderna en capas, ofrece una experiencia fluida tanto para organizadores como para participantes.
 
-### 🎨 Demo
+### 💡 ¿Para quién es este sistema?
 
-El sistema incluye:
-- **Dashboard interactivo** con estadísticas en tiempo real
-- **Gestión de torneos** con vista de tarjetas y cuadros de eliminación
-- **Sistema de inscripciones** con validación de cupos
-- **Gestión de partidos** con seguimiento de resultados
-- **Sistema de notificaciones** para eventos importantes
+- **🏫 Clubes de tenis** que organizan torneos regulares
+- **👨‍🏫 Profesores y entrenadores** que gestionan competiciones
+- **🏃‍♂️ Deportistas** que buscan inscribirse y competir
+- **👨‍💼 Administradores** que supervisan múltiples torneos
+
+### ⭐ Principales Beneficios
+
+✅ **Automatización completa** - Desde inscripciones hasta cuadros de eliminación  
+✅ **Sistema de roles robusto** - Permisos diferenciados por tipo de usuario  
+✅ **Interfaz intuitiva** - Diseño moderno y responsivo  
+✅ **Seguridad de nivel empresarial** - JWT, bcrypt, rate limiting  
+✅ **API REST completa** - Documentada y lista para integraciones  
+
+---
+
+## 🎨 Demo
+
+### Pantallas Principales
+
+**🏠 Dashboard**
+- Estadísticas en tiempo real
+- Próximos torneos
+- Partidos recientes
+- Notificaciones importantes
+
+**🏆 Gestión de Torneos**
+- Vista de tarjetas con información completa
+- Filtros por estado (planificado, en curso, finalizado)
+- Creación rápida con validación
+- Torneos abiertos y cerrados
+
+**📝 Sistema de Inscripciones**
+- **Para Deportistas**: Inscripción automática a torneos abiertos
+- **Para Administradores**: Inscripción de cualquier deportista a cualquier torneo
+- Validación de cupos en tiempo real
+- Filtrado automático de torneos ya inscritos
+
+**🎯 Gestión de Partidos**
+- Cuadros de eliminación automáticos
+- Registro de resultados por sets
+- Seguimiento de rondas
+- Historial completo
+
+### Credenciales de Prueba
+
+```
+👑 Administrador:
+   Usuario: admin
+   Contraseña: admin123
+
+👨‍🏫 Profesor:
+   Usuario: carlos_prof
+   Contraseña: prof123
+
+🏃‍♂️ Deportistas:
+   Usuario: juan_perez, maria_gonz, pedro_rod, ana_mart
+   Contraseña: deportista123
+```
 
 ---
 
 ## ✨ Características Principales
 
-### 👥 Gestión de Usuarios
-- ✅ **Tres tipos de perfiles**: Deportista, Profesor, Administrador
-- ✅ **Autenticación segura** con JWT y bcrypt
-- ✅ **Registro y login** con validación de credenciales
-- ✅ **Gestión de sesiones** con auto-logout y validación periódica
-- ✅ **CRUD completo** de usuarios con control de permisos
+### 👥 Sistema de Usuarios Multi-Rol
 
-### 🏆 Gestión de Torneos
-- ✅ **Crear torneos** (abiertos/cerrados) con múltiples configuraciones
-- ✅ **Visualización de torneos** en tarjetas con información detallada
-- ✅ **Cuadros de tenis** con visualización de eliminatorias
-- ✅ **Estados de torneo**: Planificado, En curso, Finalizado
-- ✅ **Superficies**: Arcilla, Césped, Dura, Sintética
-- ✅ **Control de participantes** con límite máximo configurable
+**🏃‍♂️ Deportistas**
+- Registro y autenticación segura
+- Inscripción automática a torneos abiertos
+- Visualización de torneos disponibles (solo planificados y abiertos)
+- No pueden ver torneos donde ya están inscritos
+- Consulta de partidos y resultados
 
-### 📝 Sistema de Inscripciones
-- ✅ **Inscripción a torneos** con validación de cupos
-- ✅ **Estados**: Pendiente, Confirmada, Cancelada, Rechazada
-- ✅ **Validación automática** de fechas y disponibilidad
-- ✅ **Gestión de listas de espera**
+**👨‍🏫 Profesores**
+- Creación y gestión de torneos
+- Inscripción de deportistas a torneos
+- Generación automática de cuadros de eliminación
+- Registro de resultados de partidos
+- Acceso a todos los torneos
 
-### 🎯 Gestión de Partidos
-- ✅ **Creación automática** de cuadros de eliminación
-- ✅ **Registro de resultados** con sets y juegos
-- ✅ **Seguimiento de rondas**: Clasificación, Ronda 1, Cuartos, Semifinales, Final
-- ✅ **Visualización de enfrentamientos** en tiempo real
+**👨‍💼 Administradores**
+- Control total del sistema
+- Gestión de usuarios (CRUD completo)
+- Inscripción de cualquier deportista a cualquier torneo
+- Supervisión de todos los torneos y partidos
+- Acceso a estadísticas globales
 
-### 📊 Dashboard y Estadísticas
-- ✅ **Estadísticas en tiempo real**: Usuarios, torneos, partidos
-- ✅ **Información personalizada** según perfil de usuario
-- ✅ **Torneos activos** y próximos eventos
-- ✅ **Historial de participación**
+### 🏆 Gestión Avanzada de Torneos
 
-### 🔔 Sistema de Notificaciones
-- ✅ **Notificaciones automáticas** para eventos importantes
-- ✅ **Estados**: No leída, Leída, Archivada
-- ✅ **Tipos**: Inscripción, Partido, Torneo, Sistema
+**Tipos de Torneos**
+- **Abiertos**: Cualquier deportista puede inscribirse
+- **Cerrados**: Solo inscripción por administrador/profesor
 
-### 🔒 Seguridad Avanzada
-- ✅ **Headers de seguridad**: CSP, HSTS, X-Frame-Options
-- ✅ **Protección CORS** configurable
-- ✅ **Rate limiting** (100 req/min)
-- ✅ **Prevención de navegación no autorizada**
-- ✅ **Validación de tokens** periódica (cada 5 minutos)
-- ✅ **Logging de seguridad** para auditoría
+**Estados del Torneo**
+- `planificado` - En preparación, aceptando inscripciones
+- `en_curso` - Torneo activo
+- `finalizado` - Torneo completado
+
+**Configuración Flexible**
+- Superficies: Césped, Arcilla, Dura, Sintética
+- Límite de participantes configurable
+- Fechas de inicio y fin
+- Descripción personalizada
+- Asignación a profesor responsable
+
+### 📝 Sistema Inteligente de Inscripciones
+
+**Para Deportistas**
+```javascript
+✓ Solo ven torneos en estado "planificado"
+✓ Solo ven torneos "abiertos"
+✓ No ven torneos donde ya están inscritos
+✓ Inscripción con un solo clic
+✓ Confirmación automática para torneos abiertos
+```
+
+**Para Admin/Profesores**
+```javascript
+✓ Ven todos los torneos planificados
+✓ Pueden inscribir a cualquier deportista
+✓ Pueden inscribir en torneos cerrados
+✓ Gestión de inscripciones pendientes
+```
+
+**Validaciones Automáticas**
+- ✅ Verificación de cupos disponibles
+- ✅ Prevención de inscripciones duplicadas
+- ✅ Validación de tipo de torneo vs perfil de usuario
+- ✅ Control de estado del torneo
+
+### 🎯 Cuadros de Eliminación
+
+- Generación automática de llaves de torneo
+- Visualización gráfica de enfrentamientos
+- Actualización en tiempo real
+- Registro de resultados por sets
+- Progresión automática de ganadores
+
+### 📊 Dashboard Interactivo
+
+- **Métricas en tiempo real**
+  - Total de usuarios activos
+  - Torneos activos/planificados/finalizados
+  - Partidos jugados/pendientes
+  - Inscripciones por torneo
+
+- **Información Personalizada**
+  - Deportistas: Mis torneos, próximos partidos
+  - Profesores: Mis torneos, inscripciones pendientes
+  - Admins: Estadísticas globales, alertas del sistema
+
+### 🔒 Seguridad de Nivel Empresarial
+
+**Autenticación y Autorización**
+- JWT (JSON Web Tokens) con expiración de 8 horas
+- Bcrypt para hash de contraseñas (12 rounds)
+- Middleware de autenticación granular
+- Blacklist de tokens revocados
+- Validación periódica de sesión (cada 5 minutos)
+
+**Protección de la Aplicación**
+- Content Security Policy (CSP)
+- HTTP Strict Transport Security (HSTS)
+- X-Frame-Options: DENY
+- X-Content-Type-Options: nosniff
+- Rate Limiting: 100 req/min por IP
+- CORS configurado con whitelist
+
+**Prevención de Ataques**
+- Protección contra CSRF
+- Sanitización de inputs
+- Validación de tipos de datos
+- Límite de tamaño de peticiones (16MB)
+- Logging de eventos de seguridad
 
 ---
 
-## 🛠 Tecnologías Utilizadas
+## 🛠 Stack Tecnológico
 
-### Backend
-- **Flask 2.0+**: Framework web principal
-- **SQLAlchemy**: ORM para base de datos
-- **Flask-JWT-Extended**: Autenticación JWT
-- **bcrypt**: Hashing de contraseñas
-- **PyMySQL**: Conector MySQL
-- **python-dotenv**: Gestión de variables de entorno
+### Backend (Python 3.12)
 
-### Frontend
-- **HTML5/CSS3**: Estructura y estilos
-- **JavaScript ES6+**: Lógica del cliente
-- **Bootstrap/Tailwind**: Diseño responsivo (según CSS)
-- **Fetch API**: Comunicación con backend
+| Tecnología | Versión | Propósito |
+|------------|---------|-----------|
+| **Flask** | 3.1+ | Framework web principal |
+| **SQLAlchemy** | 2.0+ | ORM (Object-Relational Mapping) |
+| **Flask-JWT-Extended** | 4.6+ | Autenticación JWT |
+| **Flask-CORS** | 4.0+ | Control de CORS |
+| **bcrypt** | 4.2+ | Hashing de contraseñas |
+| **PyMySQL** | 1.1+ | Driver MySQL |
+| **python-dotenv** | 1.0+ | Variables de entorno |
+
+### Frontend (Vanilla JavaScript)
+
+| Tecnología | Propósito |
+|------------|-----------|
+| **HTML5** | Estructura semántica |
+| **CSS3** | Estilos modernos con variables CSS |
+| **JavaScript ES6+** | Lógica del cliente (SPA) |
+| **Fetch API** | Comunicación asíncrona con backend |
+| **LocalStorage** | Persistencia de sesión |
 
 ### Base de Datos
-- **MySQL**: Base de datos principal (producción)
-- **SQLite**: Base de datos de desarrollo
-- **Soporte dual**: Cambio automático según configuración
 
-### Seguridad
-- **JWT (JSON Web Tokens)**: Autenticación stateless
-- **bcrypt**: Hashing seguro de contraseñas
-- **CORS**: Control de acceso entre orígenes
-- **CSP**: Content Security Policy
+```
+MySQL 8.0+ (Producción)
+   └─ Tablas: usuarios, torneos, inscripciones, partidos, notificaciones
+   
+SQLite 3.x (Desarrollo)
+   └─ Compatible con el mismo schema
+```
+
+**Características de BD**:
+- Migraciones automáticas con SQLAlchemy
+- Índices optimizados
+- Relaciones definidas con ORM
+- Soporte de transacciones
+- Pool de conexiones configurado
+
+### Arquitectura de Software
+
+```
+Patrón: MVC + Service Layer + Repository Pattern
+
+┌─────────────────────────────────────┐
+│   Templates (HTML/CSS/JS)           │  ← Vista
+├─────────────────────────────────────┤
+│   Controllers (Blueprints Flask)    │  ← Controlador
+├─────────────────────────────────────┤
+│   Services (Business Logic)         │  ← Lógica de Negocio
+├─────────────────────────────────────┤
+│   Repositories (Data Access)        │  ← Acceso a Datos
+├─────────────────────────────────────┤
+│   Models (SQLAlchemy ORM)           │  ← Modelo
+├─────────────────────────────────────┤
+│   Database (MySQL/SQLite)           │  ← Persistencia
+└─────────────────────────────────────┘
+```
 
 ---
 
-## 🏗 Arquitectura del Proyecto
+## 🏗 Arquitectura
 
-El proyecto sigue una **arquitectura en capas** con separación de responsabilidades:
+### Diagrama de Arquitectura
 
 ```
-┌─────────────────────────────────────────────────┐
-│            CAPA DE PRESENTACIÓN                 │
-│  (Templates HTML + JavaScript + CSS)            │
-└─────────────────┬───────────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────────┐
-│         CAPA DE CONTROLADORES                   │
-│  (Flask Blueprints - API REST Endpoints)        │
-└─────────────────┬───────────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────────┐
-│          CAPA DE SERVICIOS                      │
-│  (Lógica de negocio y validaciones)             │
-└─────────────────┬───────────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────────┐
-│       CAPA DE REPOSITORIOS                      │
-│  (Acceso a datos - opcional)                    │
-└─────────────────┬───────────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────────┐
-│          CAPA DE MODELOS                        │
-│  (SQLAlchemy ORM Models)                        │
-└─────────────────┬───────────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────────┐
-│           BASE DE DATOS                         │
-│  (MySQL / SQLite)                               │
-└─────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│                    FRONTEND (SPA)                      │
+│  HTML5 + CSS3 + Vanilla JavaScript + LocalStorage     │
+└───────────────────────┬────────────────────────────────┘
+                        │ HTTPS/JSON
+                        │ JWT Auth
+┌───────────────────────▼────────────────────────────────┐
+│               FLASK APPLICATION                        │
+│  ┌──────────────────────────────────────────────────┐ │
+│  │  Blueprints (Controllers)                        │ │
+│  │  • auth_bp  • torneo_bp  • inscripcion_bp       │ │
+│  │  • usuario_bp  • partido_bp  • cuadro_bp        │ │
+│  └──────────────────────┬───────────────────────────┘ │
+│                         │                              │
+│  ┌──────────────────────▼───────────────────────────┐ │
+│  │  Middleware Layer                                │ │
+│  │  • JWT Authentication  • CORS  • Rate Limiting   │ │
+│  └──────────────────────┬───────────────────────────┘ │
+│                         │                              │
+│  ┌──────────────────────▼───────────────────────────┐ │
+│  │  Service Layer (Business Logic)                  │ │
+│  │  • Validation  • Business Rules  • Workflows     │ │
+│  └──────────────────────┬───────────────────────────┘ │
+│                         │                              │
+│  ┌──────────────────────▼───────────────────────────┐ │
+│  │  Repository Layer (Optional)                     │ │
+│  │  • Data Access Abstraction                       │ │
+│  └──────────────────────┬───────────────────────────┘ │
+│                         │                              │
+│  ┌──────────────────────▼───────────────────────────┐ │
+│  │  Models (SQLAlchemy ORM)                         │ │
+│  │  • Usuario  • Torneo  • Inscripcion  • Partido  │ │
+│  └──────────────────────┬───────────────────────────┘ │
+└────────────────────────┬────────────────────────────────┘
+                         │ SQLAlchemy
+┌────────────────────────▼────────────────────────────────┐
+│               DATABASE LAYER                            │
+│  MySQL (Production) ←→ SQLite (Development)            │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### Patrones de Diseño Implementados
+### Patrones de Diseño
 
-- **MVC (Model-View-Controller)**: Separación de lógica de negocio y presentación
-- **Repository Pattern**: Abstracción de acceso a datos
-- **Service Layer**: Encapsulación de lógica de negocio
-- **Dependency Injection**: Inyección de sesiones de BD
-- **Middleware Pattern**: Autenticación y validación centralizada
-- **Blueprint Pattern**: Modularización de rutas Flask
+| Patrón | Implementación | Beneficio |
+|--------|----------------|-----------|
+| **MVC** | Controllers + Services + Models | Separación de responsabilidades |
+| **Repository** | Data access abstraction | Desacoplamiento de BD |
+| **Service Layer** | Business logic encapsulation | Reutilización de código |
+| **Middleware** | Auth, CORS, Rate Limiting | Cross-cutting concerns |
+| **Blueprint** | Flask modular routing | Escalabilidad |
+| **Dependency Injection** | DB session management | Testabilidad |
+| **Factory** | Database connection | Configuración flexible |
+
+### Flujo de una Petición
+
+```
+1. Cliente → GET /api/torneos
+2. CORS Middleware → Valida origen
+3. Auth Middleware → Valida JWT token
+4. Rate Limiter → Verifica límites
+5. Controller → Recibe petición
+6. Service → Aplica lógica de negocio
+7. Repository → Consulta base de datos
+8. Model → Retorna objetos ORM
+9. Service → Procesa datos
+10. Controller → Serializa respuesta JSON
+11. Middleware → Agrega headers de seguridad
+12. Cliente ← Recibe respuesta
+```
 
 ---
 
-## 📥 Instalación
+## 📥 Instalación Rápida
 
 ### Prerrequisitos
 
-- **Python 3.8+** instalado
-- **pip** (gestor de paquetes de Python)
-- **MySQL** (opcional, para producción)
-- **Git** (para clonar el repositorio)
+```bash
+✓ Python 3.12 o superior
+✓ pip (incluido con Python)
+✓ Git
+✓ MySQL 8.0+ (opcional, para producción)
+```
 
-### Pasos de Instalación
+### Instalación en 5 Pasos
 
-#### 1. Clonar el Repositorio
+#### 1️⃣ Clonar y entrar al directorio
 
 ```bash
 git clone https://github.com/DSArevalo4/crudSIMPLEtennis.git
 cd crudSIMPLEtennis
 ```
 
-#### 2. Crear Entorno Virtual
+#### 2️⃣ Crear entorno virtual
 
 ```bash
-# Windows (PowerShell)
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+# Windows
+python -m venv .venv
+.venv\Scripts\activate
 
 # Linux/Mac
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
-#### 3. Instalar Dependencias
+#### 3️⃣ Instalar dependencias
 
 ```bash
 pip install -r requeriments.txt
 ```
 
-#### 4. Configurar Base de Datos
+#### 4️⃣ Configurar variables de entorno
 
-**Opción A: SQLite (Desarrollo)**
-```bash
-# No requiere configuración adicional
-# Se crea automáticamente al iniciar la aplicación
-```
-
-**Opción B: MySQL (Producción)**
-```bash
-# Crear la base de datos
-mysql -u root -p < database.sql
-
-# O usar el script SQLite incluido
-sqlite3 atp_tour_2004_local.db < database_sqlite.sql
-```
-
-#### 5. Configurar Variables de Entorno
-
-Crear archivo `.env` en la raíz del proyecto:
+Crear archivo `.env`:
 
 ```env
-# Base de datos
+# Base de Datos (SQLite por defecto para desarrollo)
 USE_MYSQL=false
-MYSQL_URI=mysql+pymysql://Santy:C0ntr4s3ñ4d1f1c1l@localhost/atp_tour_2004
 DB_ECHO=false
-DB_POOL_SIZE=10
-DB_MAX_OVERFLOW=20
 
-# JWT
-JWT_SECRET_KEY=tu_clave_secreta_super_segura_aqui_12345
+# JWT Secret (CAMBIAR en producción)
+JWT_SECRET_KEY=super_secret_key_change_in_production_12345
 
 # Flask
 FLASK_ENV=development
 FLASK_DEBUG=True
 ```
 
-#### 6. Crear Usuarios de Prueba (Opcional)
+**Para MySQL** (opcional):
+```env
+USE_MYSQL=true
+MYSQL_URI=mysql+pymysql://usuario:password@localhost/atp_tour_2004
+```
+
+#### 5️⃣ Inicializar base de datos y usuarios
 
 ```bash
+# Crear usuarios de prueba
 python create_test_users.py
 ```
 
-Esto creará usuarios de prueba:
-- **Admin**: admin@test.com / admin123
-- **Profesor**: profesor@test.com / profesor123
-- **Deportista**: deportista@test.com / deportista123
+**Usuarios creados**:
+```
+👑 admin / admin123
+👨‍🏫 carlos_prof / prof123
+🏃‍♂️ juan_perez, maria_gonz, pedro_rod, ana_mart / deportista123
+```
+
+### ▶️ Iniciar la Aplicación
+
+```bash
+python Main_tenis.py
+```
+
+Abre tu navegador en: **http://localhost:5000**
+
+### 🐳 Docker (Alternativa)
+
+```bash
+# Construir imagen
+docker build -t tennis-app .
+
+# Ejecutar contenedor
+docker run -p 5000:5000 tennis-app
+```
 
 ---
 
@@ -300,53 +490,96 @@ CORS_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 
 ---
 
-## 🚀 Uso
+## 📖 Guía de Usuario
 
-### Iniciar el Servidor
+### Flujos de Trabajo por Rol
 
+#### 🏃‍♂️ Como Deportista
+
+**1. Inicio de Sesión**
 ```bash
-# Activar entorno virtual
-.\venv\Scripts\Activate.ps1  # Windows
-source venv/bin/activate      # Linux/Mac
-
-# Iniciar aplicación
-python Main_tenis.py
+Usuario: juan_perez
+Contraseña: deportista123
 ```
 
-El servidor estará disponible en: `http://localhost:5000`
+**2. Ver Torneos Disponibles**
+- Navegar a "Inscripciones"
+- Ver solo torneos:
+  - Estado: `planificado`
+  - Tipo: `abierto`
+  - Donde NO estás inscrito
 
-### Acceder al Sistema
+**3. Inscribirte a un Torneo**
+- Clic en "➕ Inscribirme"
+- Confirmar inscripción
+- El torneo desaparece de la lista (ya inscrito)
 
-1. **Abrir navegador**: Ir a `http://localhost:5000`
-2. **Login**: Usar credenciales de usuario creado
-3. **Dashboard**: Acceder a todas las funcionalidades
+**4. Ver tus Partidos**
+- Navegar a "Partidos"
+- Ver horarios y enfrentamientos
+- Consultar resultados
 
-### Flujo de Usuario por Perfil
+#### 👨‍🏫 Como Profesor
 
-#### 👤 Deportista
-1. Login con credenciales
-2. Ver torneos disponibles
-3. Inscribirse a torneos
-4. Ver partidos programados
-5. Consultar resultados
+**1. Crear Torneo**
+```javascript
+Nombre: "US Open 2025"
+Tipo: "abierto" o "cerrado"
+Superficie: "Dura"
+Fecha Inicio: 2025-12-01
+Fecha Fin: 2025-12-15
+Estado: "planificado"
+Max Participantes: 32
+```
 
-#### 👨‍🏫 Profesor
-1. Login con credenciales
-2. Crear y gestionar torneos
-3. Ver inscripciones
-4. Crear cuadros de eliminación
-5. Registrar resultados de partidos
+**2. Gestionar Inscripciones**
+- Ver todos los torneos
+- Clic en "👥 Inscribir Deportistas"
+- Seleccionar deportista
+- Confirmar inscripción
 
-#### 👨‍💼 Administrador
-1. Login con credenciales
-2. Gestionar todos los usuarios
-3. Supervisar todos los torneos
-4. Gestionar inscripciones y partidos
-5. Ver estadísticas globales
+**3. Generar Cuadro**
+- Cuando hay suficientes participantes
+- Clic en "Generar Cuadro"
+- Sistema crea llaves automáticamente
+
+**4. Registrar Resultados**
+- Navegar a "Partidos"
+- Seleccionar partido
+- Ingresar sets ganados
+- Guardar resultado
+
+#### 👨‍💼 Como Administrador
+
+**1. Gestión de Usuarios**
+- CRUD completo de usuarios
+- Activar/desactivar cuentas
+- Cambiar perfiles
+- Ver actividad
+
+**2. Supervisión de Torneos**
+- Ver todos los torneos (cualquier estado)
+- Editar configuraciones
+- Eliminar torneos
+- Generar reportes
+
+**3. Gestión de Inscripciones**
+- Inscribir a cualquier deportista
+- En cualquier tipo de torneo
+- Validar cupos
+- Gestionar listas de espera
+
+### Atajos de Teclado
+
+| Tecla | Acción |
+|-------|--------|
+| `Ctrl + Shift + R` | Recargar sin caché |
+| `F12` | Abrir consola de desarrollador |
+| `Esc` | Cerrar modales |
 
 ---
 
-## 📡 API Endpoints
+## 📡 API REST
 
 ### Autenticación
 
@@ -389,11 +622,35 @@ El servidor estará disponible en: `http://localhost:5000`
 |--------|----------|-------------|------|
 | GET | `/api/inscripciones` | Listar inscripciones | JWT |
 | GET | `/api/inscripciones/<id>` | Obtener inscripción | JWT |
-| POST | `/api/inscripciones` | Crear inscripción | Deportista |
+| POST | `/api/inscripciones` | Crear inscripción | JWT |
 | PUT | `/api/inscripciones/<id>` | Actualizar inscripción | Profesor/Admin |
-| DELETE | `/api/inscripciones/<id>` | Cancelar inscripción | Deportista/Admin |
-| GET | `/api/inscripciones/torneo/<id>` | Inscripciones por torneo | JWT |
-| GET | `/api/inscripciones/deportista/<id>` | Inscripciones por deportista | JWT |
+| DELETE | `/api/inscripciones/<id>` | Cancelar inscripción | JWT/Admin |
+| GET | `/api/inscripciones/torneos-disponibles` | Torneos disponibles para inscripción | JWT |
+| GET | `/api/inscripciones/summary` | Resumen de inscripciones | JWT |
+
+**Ejemplo de Inscripción (Deportista)**:
+```bash
+POST /api/inscripciones
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "torneo_id": 1
+}
+# El sistema asigna automáticamente el deportista_id del token
+```
+
+**Ejemplo de Inscripción (Admin)**:
+```bash
+POST /api/inscripciones
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "torneo_id": 1,
+  "deportista_id": 5
+}
+```
 
 ### Partidos
 
@@ -612,9 +869,9 @@ crudSIMPLEtennis/
 
 ---
 
-## 🤝 Contribución
+## 🤝 Contribuir
 
-¡Las contribuciones son bienvenidas! Por favor sigue estos pasos:
+¿Quieres contribuir al proyecto? ¡Genial! Sigue estos pasos:
 
 ### 1. Fork del Proyecto
 ```bash
@@ -681,31 +938,147 @@ Si encuentras algún problema o tienes preguntas:
 
 ---
 
+## 🚀 Despliegue
+
+### Despliegue en Producción
+
+#### Opción 1: Servidor Linux con Nginx + Gunicorn
+
+```bash
+# 1. Instalar Gunicorn
+pip install gunicorn
+
+# 2. Crear archivo gunicorn.conf.py
+bind = "0.0.0.0:8000"
+workers = 4
+timeout = 120
+
+# 3. Ejecutar con Gunicorn
+gunicorn -c gunicorn.conf.py Main_tenis:app
+```
+
+**Configuración Nginx**:
+```nginx
+server {
+    listen 80;
+    server_name tudominio.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location /static {
+        alias /ruta/crudSIMPLEtennis/static;
+    }
+}
+```
+
+#### Opción 2: Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - USE_MYSQL=true
+      - MYSQL_URI=mysql+pymysql://user:pass@db/tennis
+    depends_on:
+      - db
+  
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: tennis
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
+```
+
+#### Opción 3: Heroku
+
+```bash
+# 1. Crear Procfile
+web: gunicorn Main_tenis:app
+
+# 2. Crear runtime.txt
+python-3.12.0
+
+# 3. Deploy
+heroku create tu-app-tennis
+git push heroku main
+```
+
+### Variables de Entorno en Producción
+
+```env
+# ⚠️ IMPORTANTE: Cambiar estos valores
+USE_MYSQL=true
+MYSQL_URI=mysql+pymysql://user:password@host/database
+JWT_SECRET_KEY=<generar_clave_segura_64_caracteres>
+FLASK_ENV=production
+FLASK_DEBUG=False
+CORS_ORIGINS=https://tudominio.com
+
+# Seguridad
+RATE_LIMIT_REQUESTS=100
+SESSION_TIMEOUT=28800
+```
+
+### Checklist Pre-Producción
+
+- [ ] Cambiar `JWT_SECRET_KEY`
+- [ ] Configurar MySQL en producción
+- [ ] Desactivar `FLASK_DEBUG`
+- [ ] Configurar CORS con dominio real
+- [ ] Configurar HTTPS/SSL
+- [ ] Configurar backups automáticos de BD
+- [ ] Configurar logging en archivos
+- [ ] Configurar monitoreo (opcional: Sentry)
+- [ ] Pruebas de carga
+- [ ] Revisar permisos de archivos
+
+---
+
 ## 🔄 Roadmap
 
-### Versión 2.0 (Planificado)
-- [ ] Sistema de mensajería entre usuarios
-- [ ] Estadísticas avanzadas y gráficos
-- [ ] Exportación de datos a PDF/Excel
-- [ ] App móvil (React Native)
-- [ ] Sistema de rankings
-- [ ] Integración con redes sociales
+### v2.0 - En Planificación 🎯
+- [ ] Sistema de rankings automático
+- [ ] Exportación de reportes (PDF/Excel)
+- [ ] Dashboard con gráficos avanzados (Chart.js)
+- [ ] Notificaciones push en navegador
+- [ ] Sistema de mensajería interna
+- [ ] Aplicación móvil (React Native)
 - [ ] Modo oscuro
+- [ ] Integración con redes sociales
 
-### Versión 1.5 (En progreso)
-- [x] Sistema de notificaciones
-- [x] Cuadros de eliminación automáticos
-- [x] Dashboard interactivo
-- [ ] Sistema de chat en vivo
-- [ ] Notificaciones push
+### v1.5 - En Desarrollo 🚧
+- [x] Sistema de inscripciones inteligente
+- [x] Filtrado automático de torneos
+- [x] Validación de roles granular
+- [ ] Notificaciones en tiempo real
+- [ ] Chat en vivo
+- [ ] Sistema de puntuación ATP
+- [ ] Historial de enfrentamientos
 
-### Versión 1.0 (Actual)
-- [x] CRUD completo de usuarios
+### v1.0 - Actual ✅
+- [x] Autenticación JWT completa
+- [x] Sistema multi-rol (deportista/profesor/admin)
 - [x] CRUD completo de torneos
-- [x] Sistema de inscripciones
+- [x] Sistema de inscripciones con validación
 - [x] Gestión de partidos
-- [x] Autenticación JWT
-- [x] Sistema de seguridad robusto
+- [x] Cuadros de eliminación
+- [x] Dashboard interactivo
+- [x] Seguridad de nivel empresarial
+- [x] API REST documentada
+- [x] SPA con JavaScript vanilla
 
 ---
 

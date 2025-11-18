@@ -139,6 +139,49 @@ class ApiService {
     })
   }
 
+  // Generic HTTP methods
+  async get(endpoint) {
+    return fetch(`${this.baseURL}${endpoint}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${auth.getToken()}`
+      }
+    })
+  }
+
+  async post(endpoint, data) {
+    return fetch(`${this.baseURL}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${auth.getToken()}`
+      },
+      body: JSON.stringify(data)
+    })
+  }
+
+  async put(endpoint, data) {
+    return fetch(`${this.baseURL}${endpoint}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${auth.getToken()}`
+      },
+      body: JSON.stringify(data)
+    })
+  }
+
+  async delete(endpoint) {
+    return fetch(`${this.baseURL}${endpoint}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${auth.getToken()}`
+      }
+    })
+  }
+
   // Dashboard stats
   async getDashboardStats() {
     return this.request('/api/dashboard/stats')

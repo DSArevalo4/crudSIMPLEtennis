@@ -1568,3 +1568,108 @@ body {
   color: var(--color-text-secondary);
   font-style: italic;
 }
+
+/* Torneos Grid for Inscripciones */
+.torneos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+}
+
+.torneo-card-inscripcion {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.torneo-card-inscripcion:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.torneo-card-header {
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.torneo-card-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.torneo-card-body {
+  padding: var(--spacing-lg);
+  flex-grow: 1;
+}
+
+.torneo-info p {
+  margin: var(--spacing-sm) 0;
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.torneo-info p strong {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  display: inline-block;
+  min-width: 140px;
+}
+
+.torneo-descripcion {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.torneo-card-footer {
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.btn-block {
+  width: 100%;
+  text-align: center;
+  padding: var(--spacing-md);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.torneo-selected-info {
+  background: var(--color-bg);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-lg);
+  border-left: 4px solid var(--color-primary);
+}
+
+.torneo-selected-info h4 {
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--color-text);
+  font-size: 1.1rem;
+}
+
+.torneo-selected-info p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Badge variants */
+.badge-secondary {
+  background-color: var(--color-text-secondary);
+  color: white;
+}
+
