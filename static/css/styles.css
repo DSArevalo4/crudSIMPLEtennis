@@ -1673,3 +1673,247 @@ body {
   color: white;
 }
 
+.badge-info {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* Partidos Styles */
+.partidos-wrapper {
+  padding: var(--spacing-lg) 0;
+}
+
+.torneo-partidos-section {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.torneo-section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.tournament-icon {
+  font-size: 1.75rem;
+}
+
+.partidos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.partido-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.partido-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.partido-finalizado {
+  opacity: 0.95;
+}
+
+.partido-card-header {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.partido-info {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.partido-ronda {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.partido-fecha {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.partido-card-body {
+  padding: var(--spacing-lg);
+}
+
+.partido-matchup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.jugador {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  transition: all 0.2s ease;
+}
+
+.jugador-programado {
+  background: linear-gradient(90deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.jugador-ganador {
+  background: linear-gradient(90deg, #d1fae5 0%, #ecfdf5 100%);
+  border: 2px solid var(--color-success);
+  font-weight: 600;
+}
+
+.jugador-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex: 1;
+}
+
+.jugador-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.jugador-ganador .jugador-avatar {
+  background: linear-gradient(135deg, var(--color-success) 0%, #059669 100%);
+}
+
+.jugador-nombre {
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.jugador-score {
+  min-width: 50px;
+  text-align: center;
+}
+
+.sets-count {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.jugador-ganador .sets-count {
+  color: var(--color-success);
+}
+
+.vs-divider {
+  text-align: center;
+  position: relative;
+  margin: var(--spacing-sm) 0;
+}
+
+.vs-divider span {
+  background: var(--color-surface);
+  padding: 0 var(--spacing-md);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  position: relative;
+  z-index: 1;
+}
+
+.vs-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.partido-detalle {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.partido-detalle small {
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.partido-card-footer {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+.partido-card-footer .btn-sm {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Modal para resultados */
+.partido-resumen {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: white;
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+}
+
+.partido-resumen h3 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 1.25rem;
+}
+
+.partido-resumen p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 0.9rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+@media (max-width: 768px) {
+  .partidos-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

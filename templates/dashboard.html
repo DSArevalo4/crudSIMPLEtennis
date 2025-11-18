@@ -603,6 +603,7 @@
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
     <script src="{{ url_for('static', filename='js/torneos.js') }}?v=2"></script>
     <script src="{{ url_for('static', filename='js/inscripciones.js') }}?v=6"></script>
+    <script src="{{ url_for('static', filename='js/partidos.js') }}?v=1"></script>
     
     <script>
         // Sistema de navegación SPA
@@ -663,8 +664,8 @@
                     }
                     break;
                 case 'partidos':
-                    if (typeof loadPartidos === 'function') {
-                        loadPartidos();
+                    if (typeof setupPartidosUI === 'function') {
+                        setupPartidosUI();
                     }
                     break;
                 case 'inscripciones':
