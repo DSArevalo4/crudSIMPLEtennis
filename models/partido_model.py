@@ -30,6 +30,7 @@ class Partido(Base):
         return {
             'id': self.id,
             'torneo_id': self.torneo_id,
+            'torneo_nombre': self.torneo.nombre if self.torneo else None,
             'deportista1_id': self.deportista1_id,
             'deportista2_id': self.deportista2_id,
             'deportista1_nombre': f"{self.deportista1.nombre} {self.deportista1.apellido}" if self.deportista1 else None,

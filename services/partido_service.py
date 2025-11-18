@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta
 import json
 import math
+from sqlalchemy.orm import joinedload
 from models.partido_model import Partido
 from models.torneo_model import Torneo
 from models.usuario_model import Usuario
@@ -15,13 +16,31 @@ class PartidoService:
         self.db = db_session
 
     def listar_partidos(self):
-        return self.db.query(Partido).all()
+        return self.db.query(Partido).options(
+            joinedload(Partido.torneo),
+            joinedload(Partido.deportista1),
+            joinedload(Partido.deportista2),
+            joinedload(Partido.ganador),
+            joinedload(Partido.perdedor)
+        ).all()
 
     def listar_partidos_por_torneo(self, torneo_id):
-        return self.db.query(Partido).filter(Partido.torneo_id == torneo_id).all()
+        return self.db.query(Partido).options(
+            joinedload(Partido.torneo),
+            joinedload(Partido.deportista1),
+            joinedload(Partido.deportista2),
+            joinedload(Partido.ganador),
+            joinedload(Partido.perdedor)
+        ).filter(Partido.torneo_id == torneo_id).all()
 
     def listar_partidos_por_deportista(self, deportista_id):
-        return self.db.query(Partido).filter(
+        return self.db.query(Partido).options(
+            joinedload(Partido.torneo),
+            joinedload(Partido.deportista1),
+            joinedload(Partido.deportista2),
+            joinedload(Partido.ganador),
+            joinedload(Partido.perdedor)
+        ).filter(
             (Partido.deportista1_id == deportista_id) | 
             (Partido.deportista2_id == deportista_id)
         ).all()
