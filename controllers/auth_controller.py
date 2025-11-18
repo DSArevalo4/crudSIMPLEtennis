@@ -43,20 +43,19 @@ def login():
     """
     POST /auth/login
     Autentica a un usuario y retorna un token JWT.
+    Acepta login con email o username.
     Parámetros esperados (JSON):
-        email (str): Email del usuario.
+        email (str): Email o username del usuario.
         password (str): Contraseña del usuario.
     Respuesta: JSON con el token JWT y datos del usuario.
     """
     try:
         data = request.get_json()
-        # Soportar login por `email`, `username` o `identifier` (que puede ser email o username)
-        email = data.get('email')
-        username = data.get('username')
-        identifier = data.get('identifier')
+        # Aceptar 'email' como campo principal (puede ser email o username)
+        identifier = data.get('email') or data.get('username') or data.get('identifier')
         password = data.get('password')
 
-        if not password or (not email and not username and not identifier):
+        if not identifier or not password:
             logger.warning("Login fallido: identificador o contraseña no proporcionados")
             return jsonify({
                 'error': 'El email/usuario y la contraseña son obligatorios'
@@ -64,24 +63,13 @@ def login():
 
         service = AuthService(get_db_session())
 
-        usuario = None
-
-        # Priorizar email si se envía
-        if email:
-            usuario = service.authenticate_user_by_email(email, password)
-        elif identifier:
-            # Si el identifier contiene '@' asumimos email, sino username
-            if '@' in identifier:
-                usuario = service.authenticate_user_by_email(identifier, password)
-            else:
-                usuario = service.authenticate_user(identifier, password)
-        elif username:
-            usuario = service.authenticate_user(username, password)
+        # Autenticar con email o username
+        usuario = service.authenticate_user(identifier, password)
 
         if usuario:
             access_token = service.create_access_token(usuario)
             if access_token:
-                logger.info(f"Usuario autenticado exitosamente: {email}")
+                logger.info(f"Usuario autenticado exitosamente: {identifier}")
                 return jsonify({
                     'token': access_token,
                     'user': usuario.as_dict(),
@@ -92,7 +80,7 @@ def login():
                     'error': 'Error generando token de acceso'
                 }), 500
         else:
-            logger.warning(f"Login fallido para email: {email}")
+            logger.warning(f"Login fallido para: {identifier}")
             return jsonify({
                 'error': 'Credenciales inválidas'
             }), 401

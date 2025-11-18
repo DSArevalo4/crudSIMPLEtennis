@@ -9,21 +9,23 @@ class AuthService:
     def __init__(self, db_session):
         self.db = db_session
 
-    def authenticate_user(self, username, password):
+    def authenticate_user(self, username_or_email, password):
         """
-        Autentica un usuario con username y password.
+        Autentica un usuario con username/email y password.
+        Acepta tanto username como email.
         """
         try:
+            # Buscar por username o email
             usuario = self.db.query(Usuario).filter(
-                Usuario.username == username,
+                ((Usuario.username == username_or_email) | (Usuario.email == username_or_email)),
                 Usuario.activo == True
             ).first()
 
             if usuario and usuario.check_password(password):
-                logger.info(f"Usuario autenticado: {username}")
+                logger.info(f"Usuario autenticado: {username_or_email}")
                 return usuario
             else:
-                logger.warning(f"Intento de login fallido para usuario: {username}")
+                logger.warning(f"Intento de login fallido para: {username_or_email}")
                 return None
         except Exception as e:
             logger.error(f"Error en autenticación: {str(e)}")
@@ -32,22 +34,9 @@ class AuthService:
     def authenticate_user_by_email(self, email, password):
         """
         Autentica un usuario con email y password.
+        DEPRECATED: Usar authenticate_user() que acepta email o username.
         """
-        try:
-            usuario = self.db.query(Usuario).filter(
-                Usuario.email == email,
-                Usuario.activo == True
-            ).first()
-
-            if usuario and usuario.check_password(password):
-                logger.info(f"Usuario autenticado por email: {email}")
-                return usuario
-            else:
-                logger.warning(f"Intento de login fallido para email: {email}")
-                return None
-        except Exception as e:
-            logger.error(f"Error en autenticación por email: {str(e)}")
-            return None
+        return self.authenticate_user(email, password)
 
     def create_access_token(self, usuario):
         """
