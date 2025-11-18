@@ -1,109 +1,96 @@
 # controllers/notificacion_controller.py
 from flask import Blueprint, request, jsonify
-from services.notificacion_service import NotificacionService
 from config.database import get_db_session
+from services.notificacion_service import NotificacionService
 
 notificacion_bp = Blueprint('notificacion_bp', __name__)
 
-@notificacion_bp.route('/deportistas/<int:deportista_id>/notificaciones', methods=['GET'])
-def obtener_notificaciones_deportista(deportista_id):
-    """
-    GET /deportistas/<deportista_id>/notificaciones
-    Obtiene las notificaciones de un deportista.
-    Parámetros opcionales:
-        limite: Número máximo de notificaciones (default: 10)
-    """
+@notificacion_bp.route('/api/notificaciones/deportista/<int:deportista_id>', methods=['GET'])
+def get_notificaciones_deportista(deportista_id):
+    """Obtiene las notificaciones de un deportista"""
+    db = get_db_session()
     try:
-        limite = request.args.get('limite', 10, type=int)
-        service = NotificacionService(get_db_session())
-        notificaciones = service.obtener_notificaciones_deportista(deportista_id, limite)
+        servicio = NotificacionService(db)
+        solo_no_leidas = request.args.get('solo_no_leidas', 'false').lower() == 'true'
+        limite = int(request.args.get('limite', 20))
+        
+        notificaciones = servicio.obtener_notificaciones_deportista(
+            deportista_id, 
+            limite=limite,
+            solo_no_leidas=solo_no_leidas
+        )
+        
         return jsonify(notificaciones), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
 
-@notificacion_bp.route('/deportistas/<int:deportista_id>/proximo-partido', methods=['GET'])
-def obtener_proximo_partido_notificacion(deportista_id):
-    """
-    GET /deportistas/<deportista_id>/proximo-partido
-    Obtiene la notificación del próximo partido de un deportista.
-    """
+@notificacion_bp.route('/api/notificaciones/<int:notificacion_id>/leer', methods=['PUT'])
+def marcar_leida(notificacion_id):
+    """Marca una notificación como leída"""
+    db = get_db_session()
     try:
-        service = NotificacionService(get_db_session())
-        notificacion = service.notificar_proximo_partido(deportista_id)
+        data = request.get_json()
+        deportista_id = data.get('deportista_id')
         
-        if notificacion:
-            return jsonify(notificacion), 200
-        return jsonify({'mensaje': 'No hay notificaciones'}), 404
+        if not deportista_id:
+            return jsonify({'error': 'deportista_id requerido'}), 400
         
+        servicio = NotificacionService(db)
+        resultado = servicio.marcar_como_leida(notificacion_id, deportista_id)
+        
+        if resultado:
+            return jsonify({'mensaje': 'Notificación marcada como leída'}), 200
+        else:
+            return jsonify({'error': 'Notificación no encontrada'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
 
-@notificacion_bp.route('/partidos/<int:partido_id>/notificar-resultado', methods=['POST'])
-def notificar_resultado_partido(partido_id):
-    """
-    POST /partidos/<int:partido_id>/notificar-resultado
-    Genera notificaciones del resultado de un partido.
-    """
+@notificacion_bp.route('/api/notificaciones/deportista/<int:deportista_id>/leer-todas', methods=['PUT'])
+def marcar_todas_leidas(deportista_id):
+    """Marca todas las notificaciones como leídas"""
+    db = get_db_session()
     try:
-        service = NotificacionService(get_db_session())
-        notificaciones = service.notificar_resultado_partido(partido_id)
+        servicio = NotificacionService(db)
+        servicio.marcar_todas_como_leidas(deportista_id)
         
-        if notificaciones:
-            return jsonify(notificaciones), 200
-        return jsonify({'mensaje': 'No se generaron notificaciones'}), 404
-        
+        return jsonify({'mensaje': 'Todas las notificaciones marcadas como leídas'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
 
-@notificacion_bp.route('/torneos/<int:torneo_id>/ronda/<int:ronda>/notificar', methods=['POST'])
-def notificar_nueva_ronda(torneo_id, ronda):
-    """
-    POST /torneos/<int:torneo_id>/ronda/<int:ronda>/notificar
-    Notifica a los deportistas sobre una nueva ronda.
-    """
+@notificacion_bp.route('/api/notificaciones/deportista/<int:deportista_id>/no-leidas/count', methods=['GET'])
+def contar_no_leidas(deportista_id):
+    """Cuenta las notificaciones no leídas"""
+    db = get_db_session()
     try:
-        service = NotificacionService(get_db_session())
-        notificaciones = service.notificar_nueva_ronda(torneo_id, ronda)
+        servicio = NotificacionService(db)
+        count = servicio.contar_no_leidas(deportista_id)
         
-        if notificaciones:
-            return jsonify({
-                'mensaje': f'Notificaciones enviadas para la ronda {ronda}',
-                'notificaciones': notificaciones
-            }), 200
-        return jsonify({'mensaje': 'No se generaron notificaciones'}), 404
-        
+        return jsonify({'count': count}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
 
-@notificacion_bp.route('/inscripciones/<int:inscripcion_id>/notificar-aceptacion', methods=['POST'])
-def notificar_inscripcion_aceptada(inscripcion_id):
-    """
-    POST /inscripciones/<int:inscripcion_id>/notificar-aceptacion
-    Notifica cuando una inscripción es aceptada.
-    """
+@notificacion_bp.route('/api/notificaciones/generar-partidos-programados', methods=['POST'])
+def generar_notificaciones_partidos():
+    """Genera notificaciones para todos los partidos programados"""
+    db = get_db_session()
     try:
-        service = NotificacionService(get_db_session())
-        notificacion = service.notificar_inscripcion_aceptada(inscripcion_id)
+        servicio = NotificacionService(db)
+        notificaciones = servicio.notificar_partidos_programados()
         
-        if notificacion:
-            return jsonify(notificacion), 200
-        return jsonify({'mensaje': 'No se generó notificación'}), 404
-        
+        return jsonify({
+            'mensaje': f'{len(notificaciones)} notificaciones creadas',
+            'count': len(notificaciones)
+        }), 200
     except Exception as e:
+        db.rollback()
         return jsonify({'error': str(e)}), 500
-
-@notificacion_bp.route('/recordatorios/partidos', methods=['GET'])
-def generar_recordatorios_partidos():
-    """
-    GET /recordatorios/partidos
-    Genera recordatorios para partidos próximos.
-    Parámetros opcionales:
-        dias_antes: Días antes del partido para recordar (default: 1)
-    """
-    try:
-        dias_antes = request.args.get('dias_antes', 1, type=int)
-        service = NotificacionService(get_db_session())
-        recordatorios = service.generar_recordatorio_partidos(dias_antes)
-        return jsonify(recordatorios), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()

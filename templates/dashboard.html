@@ -379,9 +379,18 @@
                     <h1>Notificaciones</h1>
                     <p class="subtitle">Centro de Notificaciones</p>
                 </div>
+                <div class="header-right">
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="marcarTodasLeidas()">
+                            📨 Marcar todas como leídas
+                        </button>
+                    </div>
+                </div>
             </header>
             <div class="notificaciones-container">
-                <p>Sección de notificaciones en desarrollo...</p>
+                <div class="notificaciones-list" id="notificacionesList">
+                    <div class="loading">Cargando notificaciones...</div>
+                </div>
             </div>
             </div>
             <!-- End Notificaciones Section -->
@@ -600,6 +609,7 @@
     <script src="{{ url_for('static', filename='js/torneos.js') }}?v=2"></script>
     <script src="{{ url_for('static', filename='js/inscripciones.js') }}?v=6"></script>
     <script src="{{ url_for('static', filename='js/partidos.js') }}?v=7"></script>
+    <script src="{{ url_for('static', filename='js/notificaciones.js') }}?v=1"></script>
     
     <script>
         // Sistema de navegación SPA
@@ -672,6 +682,11 @@
                 case 'inscripciones':
                     if (typeof setupInscripcionesUI === 'function') {
                         setupInscripcionesUI();
+                    }
+                    break;
+                case 'notificaciones':
+                    if (typeof setupNotificacionesUI === 'function') {
+                        setupNotificacionesUI();
                     }
                     break;
                 case 'dashboard':

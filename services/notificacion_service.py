@@ -3,10 +3,85 @@ from datetime import datetime, timedelta
 from models.usuario_model import Usuario
 from models.partido_model import Partido
 from models.torneo_model import Torneo
+from models.notificacion_model import Notificacion
+from sqlalchemy.orm import joinedload
 
 class NotificacionService:
     def __init__(self, db_session):
         self.db = db_session
+
+    def crear_notificacion(self, deportista_id, tipo, titulo, mensaje, partido_id=None, torneo_id=None):
+        """
+        Crea una nueva notificación persistente.
+        """
+        notificacion = Notificacion(
+            deportista_id=deportista_id,
+            tipo=tipo,
+            titulo=titulo,
+            mensaje=mensaje,
+            partido_id=partido_id,
+            torneo_id=torneo_id,
+            leida=False,
+            fecha_creacion=datetime.utcnow()
+        )
+        self.db.add(notificacion)
+        self.db.commit()
+        return notificacion
+
+    def notificar_partidos_programados(self):
+        """
+        Crea notificaciones para TODOS los partidos programados que no tengan notificación.
+        """
+        # Obtener todos los partidos programados
+        partidos = self.db.query(Partido).filter(
+            Partido.estado == 'programado'
+        ).options(
+            joinedload(Partido.torneo),
+            joinedload(Partido.deportista1),
+            joinedload(Partido.deportista2)
+        ).all()
+
+        notificaciones_creadas = []
+
+        for partido in partidos:
+            # Verificar si ya existe notificación para este partido
+            for deportista_id in [partido.deportista1_id, partido.deportista2_id]:
+                if not deportista_id:
+                    continue
+
+                # Verificar si ya existe notificación
+                existe = self.db.query(Notificacion).filter(
+                    Notificacion.deportista_id == deportista_id,
+                    Notificacion.partido_id == partido.id,
+                    Notificacion.tipo == 'partido_programado'
+                ).first()
+
+                if not existe:
+                    # Determinar rival
+                    if deportista_id == partido.deportista1_id:
+                        rival = partido.deportista2
+                    else:
+                        rival = partido.deportista1
+
+                    rival_nombre = f"{rival.nombre} {rival.apellido}" if rival else "Por definir"
+                    
+                    titulo = f"Partido Programado - {partido.torneo.nombre}"
+                    mensaje = f"Tienes un partido programado en {partido.ronda or 'Ronda 1'} contra {rival_nombre}. Superficie: {partido.torneo.superficie or 'Dura'}."
+                    
+                    if partido.fecha_partido:
+                        mensaje += f" Fecha: {partido.fecha_partido.strftime('%d/%m/%Y')}"
+
+                    notif = self.crear_notificacion(
+                        deportista_id=deportista_id,
+                        tipo='partido_programado',
+                        titulo=titulo,
+                        mensaje=mensaje,
+                        partido_id=partido.id,
+                        torneo_id=partido.torneo_id
+                    )
+                    notificaciones_creadas.append(notif)
+
+        return notificaciones_creadas
 
     def notificar_proximo_partido(self, deportista_id):
         """
@@ -167,33 +242,60 @@ class NotificacionService:
             }
         }
 
-    def obtener_notificaciones_deportista(self, deportista_id, limite=10):
+    def obtener_notificaciones_deportista(self, deportista_id, limite=20, solo_no_leidas=False):
         """
-        Obtiene las notificaciones recientes de un deportista.
+        Obtiene las notificaciones de un deportista.
         """
-        notificaciones = []
+        query = self.db.query(Notificacion).filter(
+            Notificacion.deportista_id == deportista_id
+        )
 
-        # Próximo partido
-        proximo_partido = self.notificar_proximo_partido(deportista_id)
-        if proximo_partido:
-            notificaciones.append(proximo_partido)
+        if solo_no_leidas:
+            query = query.filter(Notificacion.leida == False)
 
-        # Partidos recientes finalizados
-        partidos_recientes = self.db.query(Partido).filter(
-            (Partido.deportista1_id == deportista_id) | (Partido.deportista2_id == deportista_id),
-            Partido.estado == 'finalizado'
-        ).order_by(Partido.fecha_partido.desc()).limit(5).all()
+        notificaciones = query.order_by(
+            Notificacion.fecha_creacion.desc()
+        ).limit(limite).all()
 
-        for partido in partidos_recientes:
-            resultado_notif = self.notificar_resultado_partido(partido.id)
-            if resultado_notif:
-                # Filtrar solo la notificación del deportista actual
-                for notif in resultado_notif:
-                    if notif['deportista_id'] == deportista_id:
-                        notificaciones.append(notif)
-                        break
+        return [notif.as_dict() for notif in notificaciones]
 
-        return notificaciones[:limite]
+    def marcar_como_leida(self, notificacion_id, deportista_id):
+        """
+        Marca una notificación como leída.
+        """
+        notificacion = self.db.query(Notificacion).filter(
+            Notificacion.id == notificacion_id,
+            Notificacion.deportista_id == deportista_id
+        ).first()
+
+        if notificacion:
+            notificacion.leida = True
+            notificacion.fecha_lectura = datetime.utcnow()
+            self.db.commit()
+            return True
+        return False
+
+    def marcar_todas_como_leidas(self, deportista_id):
+        """
+        Marca todas las notificaciones de un deportista como leídas.
+        """
+        self.db.query(Notificacion).filter(
+            Notificacion.deportista_id == deportista_id,
+            Notificacion.leida == False
+        ).update({
+            'leida': True,
+            'fecha_lectura': datetime.utcnow()
+        })
+        self.db.commit()
+
+    def contar_no_leidas(self, deportista_id):
+        """
+        Cuenta las notificaciones no leídas de un deportista.
+        """
+        return self.db.query(Notificacion).filter(
+            Notificacion.deportista_id == deportista_id,
+            Notificacion.leida == False
+        ).count()
 
     def generar_recordatorio_partidos(self, dias_antes=1):
         """

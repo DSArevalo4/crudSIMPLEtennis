@@ -1917,3 +1917,137 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===================================
+   NOTIFICACIONES STYLES
+   =================================== */
+
+.notificaciones-container {
+    padding: var(--spacing-xl);
+}
+
+.notificaciones-section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: var(--spacing-xl) 0 var(--spacing-md) 0;
+}
+
+.notificaciones-section-title:first-child {
+    margin-top: 0;
+}
+
+.notificaciones-grid {
+    display: grid;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.notificacion-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.notificacion-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.notificacion-card.no-leida {
+    background: linear-gradient(to right, #eff6ff 0%, var(--color-surface) 100%);
+    border-left: 4px solid var(--color-primary) !important;
+}
+
+.notificacion-card.leida {
+    opacity: 0.7;
+}
+
+.notificacion-icono {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notificacion-contenido {
+    flex: 1;
+    min-width: 0;
+}
+
+.notificacion-titulo {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-xs);
+}
+
+.notificacion-mensaje {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin-bottom: var(--spacing-sm);
+}
+
+.notificacion-footer {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.notificacion-fecha {
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+}
+
+.notificacion-badge {
+    display: inline-block;
+    background: var(--color-primary);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-2xl) var(--spacing-md);
+}
+
+.empty-state svg {
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-lg);
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-sm);
+}
+
+.empty-state p {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+/* Badge en el sidebar */
+.nav-item .badge {
+    background: var(--color-danger);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+    display: inline-block;
+}
