@@ -1,38 +1,35 @@
 // Gestión de Partidos
-let partidos = [];
-let torneos = [];
-let deportistas = [];
+let partidosData = [];
+let torneosPartidos = [];
+let deportistasPartidos = [];
 let currentPartido = null;
 
 async function setupPartidosUI() {
+    console.log('🎾 setupPartidosUI() EJECUTÁNDOSE...');
     const user = auth.getUser();
     if (!user) {
-        console.error('Usuario no autenticado');
+        console.error('❌ Usuario no autenticado');
         return;
     }
+    console.log('✅ Usuario autenticado:', user.perfil);
 
-    const headerActions = document.querySelector('#section-partidos .header-right');
+    const headerActions = document.querySelector('#section-partidos .header-actions');
     const subtitle = document.querySelector('#section-partidos .subtitle');
 
-    if (!headerActions || !subtitle) {
-        console.error('Elementos de UI de partidos no encontrados');
-        return;
-    }
-
-    // Configurar UI según el rol
-    if (user.perfil === 'deportista') {
-        // Deportistas solo ven partidos
-        headerActions.style.display = 'none';
-        subtitle.textContent = 'Mis Partidos y Resultados';
-    } else if (user.perfil === 'administrador' || user.perfil === 'profesor') {
-        // Admin y profesores pueden crear partidos
-        subtitle.textContent = 'Gestión de Partidos y Resultados';
+    // Configurar UI según el rol (opcional, no detener si no existen)
+    if (subtitle) {
+        if (user.perfil === 'deportista') {
+            subtitle.textContent = 'Mis Partidos y Resultados';
+            if (headerActions) headerActions.style.display = 'none';
+        } else if (user.perfil === 'administrador' || user.perfil === 'profesor') {
+            subtitle.textContent = 'Gestión de Partidos y Resultados';
+        }
     }
 
     // Cargar datos iniciales
     await loadPartidos();
     
-    console.log('Partidos UI configurada. Total partidos:', partidos.length);
+    console.log('Partidos UI configurada. Total partidos:', partidosData.length);
 }
 
 async function loadPartidos() {
@@ -46,21 +43,21 @@ async function loadPartidos() {
         }
         
         console.log('Cargando partidos desde:', endpoint);
-        const response = await api.get(endpoint);
-        console.log('Response status:', response.status);
         
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || 'Error al cargar partidos');
-        }
-
-        partidos = await response.json();
-        console.log('Partidos cargados:', partidos);
+        // Usar api.request() que ya maneja la autenticación y parsea el JSON
+        partidosData = await api.request(endpoint);
+        console.log('Partidos cargados:', partidosData);
         
         renderPartidos();
     } catch (error) {
         console.error('Error cargando partidos:', error);
         showNotification('Error al cargar partidos: ' + error.message, 'error');
+        
+        // Mostrar mensaje en el contenedor
+        const container = document.querySelector('#section-partidos .partidos-container');
+        if (container) {
+            container.innerHTML = `<p class="error-message">Error al cargar partidos: ${error.message}</p>`;
+        }
     }
 }
 
@@ -72,16 +69,16 @@ function renderPartidos() {
     }
 
     const user = auth.getUser();
-    console.log('Renderizando partidos. Total:', partidos.length);
+    console.log('Renderizando partidos. Total:', partidosData.length);
 
-    if (!partidos || partidos.length === 0) {
+    if (!partidosData || partidosData.length === 0) {
         container.innerHTML = '<p class="no-data">No hay partidos registrados</p>';
         return;
     }
 
     // Agrupar partidos por torneo
     const partidosPorTorneo = {};
-    partidos.forEach(partido => {
+    partidosData.forEach(partido => {
         const torneoNombre = partido.torneo_nombre || 'Sin torneo';
         if (!partidosPorTorneo[torneoNombre]) {
             partidosPorTorneo[torneoNombre] = [];
@@ -223,7 +220,7 @@ function renderPartidoCard(partido, user) {
 }
 
 async function openEditPartido(partidoId) {
-    const partido = partidos.find(p => p.id === partidoId);
+    const partido = partidosData.find(p => p.id === partidoId);
     if (!partido) {
         showNotification('Partido no encontrado', 'error');
         return;
@@ -344,14 +341,10 @@ async function saveResultado() {
         console.log('Registrando resultado:', data);
         
         // Usar el endpoint específico para registrar resultados
-        const response = await api.post(`/api/partidos/${currentPartido.id}/resultado`, data);
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Error al registrar resultado');
-        }
-
-        const result = await response.json();
+        const result = await api.request(`/api/partidos/${currentPartido.id}/resultado`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
         console.log('Resultado registrado:', result);
         
         // Mostrar mensaje con información del siguiente partido
@@ -378,13 +371,9 @@ async function deletePartido(partidoId) {
     }
 
     try {
-        const response = await api.delete(`/api/partidos/${partidoId}`);
-        
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Error al eliminar partido');
-        }
+        await api.request(`/api/partidos/${partidoId}`, {
+            method: 'DELETE'
+        });
 
         showNotification('Partido eliminado exitosamente', 'success');
         await loadPartidos();
