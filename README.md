@@ -183,16 +183,25 @@
 
 ### 📊 Dashboard Interactivo
 
+- **Dashboard Moderno con Gráficos Sparkline**
+  - Tarjetas dinámicas con gradientes de color
+  - Mini-gráficos de tendencia en tiempo real
+  - Diseño inspirado en aplicaciones fitness modernas
+  - Efectos de hover y animaciones suaves
+  
 - **Métricas en tiempo real**
-  - Total de usuarios activos
-  - Torneos activos/planificados/finalizados
-  - Partidos jugados/pendientes
-  - Inscripciones por torneo
+  - Torneos activos con sparkline de evolución
+  - Partidos jugados en el sistema
+  - Deportistas registrados con tendencia
+  - Tasa de participación actualizada
+  - Actividad de torneos del mes
+  - Deportistas activos vs total
 
 - **Información Personalizada**
-  - Deportistas: Mis torneos, próximos partidos
-  - Profesores: Mis torneos, inscripciones pendientes
-  - Admins: Estadísticas globales, alertas del sistema
+  - Próximo partido con detalles de rival y fecha
+  - Notificaciones no leídas con contador
+  - Pills informativas con iconos
+  - Datos calculados en tiempo real desde la base de datos
 
 ### 🔒 Seguridad de Nivel Empresarial
 
@@ -684,7 +693,40 @@ Content-Type: application/json
 
 | Método | Endpoint | Descripción | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/dashboard/stats` | Estadísticas generales | JWT |
+| GET | `/api/dashboard/stats` | Estadísticas del sistema con datos reales | JWT |
+
+**Respuesta de `/api/dashboard/stats`**:
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 2,
+      "nombre": "Admin",
+      "apellido": "Sistema",
+      "email": "admin@tennis.com",
+      "perfil": "administrador"
+    },
+    "nextMatch": {
+      "id": 5,
+      "torneo": "Wimbledon 2025",
+      "rival": {
+        "nombre": "Juan Pérez",
+        "pais": "🎾"
+      },
+      "fecha": "2025-11-20T10:00:00",
+      "ronda": "Primera Ronda"
+    },
+    "systemStats": {
+      "torneosActivos": 1,
+      "partidosJugados": 5,
+      "torneosMes": 2,
+      "totalDeportistas": 6,
+      "tasaParticipacion": 66.7
+    }
+  }
+}
+```
 
 ---
 
@@ -1063,7 +1105,11 @@ SESSION_TIMEOUT=28800
 - [x] Sistema de inscripciones inteligente
 - [x] Filtrado automático de torneos
 - [x] Validación de roles granular
-- [ ] Notificaciones en tiempo real
+- [x] Dashboard dinámico con gráficos sparkline
+- [x] Sistema de notificaciones persistente
+- [x] Progresión automática de partidos
+- [x] Cuadros de eliminación auto-actualizables
+- [ ] Notificaciones push en navegador
 - [ ] Chat en vivo
 - [ ] Sistema de puntuación ATP
 - [ ] Historial de enfrentamientos

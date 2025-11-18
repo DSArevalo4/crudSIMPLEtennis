@@ -2512,3 +2512,167 @@ body {
         flex-direction: column;
     }
 }
+
+/* ============================================
+   DASHBOARD DINÁMICO - Estilo moderno
+   ============================================ */
+
+/* Tarjetas de estadísticas dinámicas */
+.stat-card-dynamic {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.98));
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.stat-card-dynamic::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: currentColor;
+}
+
+.stat-card-dynamic:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.stat-card-dynamic.gradient-orange {
+    color: #ff8c42;
+}
+
+.stat-card-dynamic.gradient-blue {
+    color: #4169e1;
+}
+
+.stat-card-dynamic.gradient-yellow {
+    color: #ffd700;
+}
+
+.stat-card-dynamic.gradient-teal {
+    color: #10b981;
+}
+
+.stat-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.stat-icon-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: currentColor;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.9;
+}
+
+.stat-label-sm {
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value-xl {
+    font-size: 42px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 8px 0 16px 0;
+    line-height: 1;
+}
+
+.sparkline-container {
+    height: 40px;
+    margin-top: 12px;
+    position: relative;
+}
+
+.sparkline-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Stats Pills secundarias */
+.secondary-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.stat-pill {
+    background: linear-gradient(135deg, #f8fafc, #ffffff);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.stat-pill:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.pill-icon {
+    font-size: 32px;
+    filter: grayscale(0.2);
+}
+
+.pill-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pill-label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pill-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* Ajustar grid de stats */
+.stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+/* Responsivo para móviles */
+@media (max-width: 768px) {
+    .stat-value-xl {
+        font-size: 32px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .secondary-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}

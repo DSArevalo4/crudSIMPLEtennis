@@ -105,14 +105,23 @@ def dashboard_stats():
         stats = service.get_user_stats(user_id)
         
         if not stats:
-            return jsonify({'error': 'Usuario no encontrado'}), 404
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no encontrado'
+            }), 404
         
-        return jsonify(stats), 200
+        return jsonify({
+            'success': True,
+            'data': stats
+        }), 200
     except Exception as e:
         print(f"Error obteniendo estadísticas: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
     finally:
         session.close()
 

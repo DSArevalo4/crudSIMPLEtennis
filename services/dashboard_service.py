@@ -22,22 +22,53 @@ class DashboardService:
         # Estadísticas mensuales (últimos 12 meses)
         monthly_stats = self._get_monthly_stats(user_id)
         
-        # Estadísticas globales
-        global_stats = self._get_global_stats(user_id)
-        
-        # Rankings
-        rankings = self._get_rankings(user_id)
-        
-        # Últimos resultados
-        latest_scores = self._get_latest_scores(user_id)
+        # Estadísticas del sistema
+        system_stats = self._get_system_stats()
         
         return {
             'user': user.as_dict(),
             'nextMatch': proximo_partido,
             'monthlyStats': monthly_stats,
-            'globalStats': global_stats,
-            'rankings': rankings,
-            'latestScores': latest_scores
+            'systemStats': system_stats
+        }
+    
+    def _get_system_stats(self):
+        """Obtiene estadísticas generales del sistema"""
+        # Torneos activos (estado 'en_curso')
+        torneos_activos = self.db.query(func.count(Torneo.id))\
+            .filter(Torneo.estado == 'en_curso').scalar() or 0
+        
+        # Total de partidos jugados (con resultado)
+        partidos_jugados = self.db.query(func.count(Partido.id))\
+            .filter(Partido.resultado.isnot(None)).scalar() or 0
+        
+        # Actividad de torneos (torneos creados en los últimos 30 días o futuros)
+        hace_un_mes = datetime.now() - timedelta(days=30)
+        futuro_proximo = datetime.now() + timedelta(days=30)
+        torneos_mes = self.db.query(func.count(Torneo.id))\
+            .filter(Torneo.fecha_inicio >= hace_un_mes)\
+            .filter(Torneo.fecha_inicio <= futuro_proximo).scalar() or 0
+        
+        # Total de deportistas registrados
+        total_deportistas = self.db.query(func.count(Usuario.id))\
+            .filter(Usuario.perfil == 'deportista').scalar() or 0
+        
+        # Total de inscripciones
+        total_inscripciones = self.db.query(func.count(Inscripcion.id)).scalar() or 0
+        
+        # Tasa de participación (inscripciones/deportistas)
+        tasa_participacion = 0
+        if total_deportistas > 0 and total_inscripciones > 0:
+            # Deportistas únicos con al menos una inscripción
+            deportistas_activos = self.db.query(func.count(func.distinct(Inscripcion.deportista_id))).scalar() or 0
+            tasa_participacion = round((deportistas_activos / total_deportistas) * 100, 1)
+        
+        return {
+            'torneosActivos': torneos_activos,
+            'partidosJugados': partidos_jugados,
+            'torneosMes': torneos_mes,
+            'totalDeportistas': total_deportistas,
+            'tasaParticipacion': tasa_participacion
         }
 
     def _get_next_match(self, user_id):
@@ -67,7 +98,7 @@ class DashboardService:
             'torneo': partido.torneo.nombre if partido.torneo else 'Sin torneo',
             'rival': {
                 'nombre': f"{rival.nombre} {rival.apellido}" if rival else "Por definir",
-                'pais': rival.pais if rival else None
+                'pais': '🎾'
             },
             'fecha': partido.fecha_partido.isoformat() if partido.fecha_partido else None,
             'ronda': partido.ronda

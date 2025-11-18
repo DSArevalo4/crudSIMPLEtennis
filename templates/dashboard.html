@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Sistema de Torneos</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=5">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{{ url_for('static', filename='js/config.js') }}"></script>
     <script src="{{ url_for('static', filename='js/url-manager.js') }}"></script>
@@ -192,143 +192,86 @@
                 </div>
             </div>
 
-            <!-- Stats Row: Global Stats + Rankings -->
-            <div class="dashboard-stats-row">
-                <div class="global-stats-card">
-                    <h3>Estadísticas Globales</h3>
-                    <div class="global-stats-container">
-                        <div class="loading">Cargando...</div>
-                    </div>
-                </div>
-                
-                <div class="rankings-card">
-                    <h3>Rankings</h3>
-                    <div class="rankings-container">
-                        <div class="loading">Cargando...</div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Stats Cards -->
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon blue">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                            <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-                        </svg>
+                <div class="stat-card-dynamic gradient-orange">
+                    <div class="stat-header">
+                        <div class="stat-icon-sm">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <p class="stat-label-sm">Torneos Activos</p>
                     </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Torneos Activos</p>
-                        <h2 class="stat-value" id="activeTournaments">0</h2>
-                        <p class="stat-change positive">+20% vs mes anterior</p>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon orange">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M12 6v6l4 2"/>
-                        </svg>
-                    </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Partidos Jugados</p>
-                        <h2 class="stat-value" id="totalMatches">0</h2>
-                        <p class="stat-change positive">+15% vs mes anterior</p>
+                    <h2 class="stat-value-xl" id="activeTournaments">0</h2>
+                    <div class="sparkline-container">
+                        <canvas id="torneosSparkline" width="200" height="40"></canvas>
                     </div>
                 </div>
 
-                <div class="stat-card highlight">
-                    <div class="stat-icon-large">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                        </svg>
+                <div class="stat-card-dynamic gradient-blue">
+                    <div class="stat-header">
+                        <div class="stat-icon-sm">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
+                        </div>
+                        <p class="stat-label-sm">Partidos Jugados</p>
                     </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Tasa de Participación</p>
-                        <h2 class="stat-value-large" id="participationRate">0%</h2>
-                        <p class="stat-sublabel">De 100 deportistas</p>
-                        <a href="#" class="stat-link">Ver detalles →</a>
+                    <h2 class="stat-value-xl" id="matchesPlayed">0</h2>
+                    <div class="sparkline-container">
+                        <canvas id="partidosSparkline" width="200" height="40"></canvas>
+                    </div>
+                </div>
+
+                <div class="stat-card-dynamic gradient-yellow">
+                    <div class="stat-header">
+                        <div class="stat-icon-sm">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <p class="stat-label-sm">Deportistas</p>
+                    </div>
+                    <h2 class="stat-value-xl" id="registeredPlayers">0</h2>
+                    <div class="sparkline-container">
+                        <canvas id="deportistasSparkline" width="200" height="40"></canvas>
+                    </div>
+                </div>
+
+                <div class="stat-card-dynamic gradient-teal">
+                    <div class="stat-header">
+                        <div class="stat-icon-sm">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                        </div>
+                        <p class="stat-label-sm">Participación</p>
+                    </div>
+                    <h2 class="stat-value-xl" id="participationRate">0%</h2>
+                    <div class="sparkline-container">
+                        <canvas id="participacionSparkline" width="200" height="40"></canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- Chart Section -->
-            <div class="chart-section">
-                <div class="chart-header">
-                    <h2>Actividad de Torneos</h2>
-                    <div class="chart-legend">
-                        <span class="legend-item">
-                            <span class="legend-dot blue"></span>
-                            Torneos Activos
-                        </span>
-                        <span class="legend-item">
-                            <span class="legend-dot orange"></span>
-                            Partidos Jugados
-                        </span>
-                        <span class="legend-item">
-                            <span class="legend-dot green"></span>
-                            Inscripciones
-                        </span>
+            <!-- Secondary Stats -->
+            <div class="secondary-stats-grid">
+                <div class="stat-pill">
+                    <span class="pill-icon">📅</span>
+                    <div class="pill-content">
+                        <span class="pill-label">Torneos del Mes</span>
+                        <span class="pill-value" id="tournamentActivity">0</span>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="activityChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Quick Stats -->
-            <div class="quick-stats-grid">
-                <div class="quick-stat-card">
-                    <div class="quick-stat-icon blue">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                        </svg>
-                    </div>
-                    <div class="quick-stat-content">
-                        <h3 id="totalPlayers">0</h3>
-                        <p>Deportistas Registrados</p>
-                    </div>
-                </div>
-
-                <div class="quick-stat-card">
-                    <div class="quick-stat-icon orange">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="8.5" cy="7" r="4"/>
-                            <line x1="20" y1="8" x2="20" y2="14"/>
-                        </svg>
-                    </div>
-                    <div class="quick-stat-content">
-                        <h3 id="pendingInscriptions">0</h3>
-                        <p>Inscripciones Pendientes</p>
-                    </div>
-                </div>
-
-                <div class="quick-stat-card">
-                    <div class="quick-stat-icon green">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                        </svg>
-                    </div>
-                    <div class="quick-stat-content">
-                        <h3 id="completionRate">0%</h3>
-                        <p>Tasa de Finalización</p>
-                    </div>
-                </div>
-
-                <div class="quick-stat-card">
-                    <div class="quick-stat-icon purple">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                    </div>
-                    <div class="quick-stat-content">
-                        <h3 id="avgMatchDuration">0</h3>
-                        <p>Duración Promedio (min)</p>
+                <div class="stat-pill">
+                    <span class="pill-icon">👥</span>
+                    <div class="pill-content">
+                        <span class="pill-label">Deportistas Activos</span>
+                        <span class="pill-value" id="participationSubtext">0 de 0</span>
                     </div>
                 </div>
             </div>
@@ -630,7 +573,7 @@
     <script src="{{ url_for('static', filename='js/config.js') }}"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}?v=2"></script>
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}?v=2"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}?v=5"></script>
     <script src="{{ url_for('static', filename='js/torneos.js') }}?v=4"></script>
     <script src="{{ url_for('static', filename='js/inscripciones.js') }}?v=6"></script>
     <script src="{{ url_for('static', filename='js/partidos.js') }}?v=7"></script>

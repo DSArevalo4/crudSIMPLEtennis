@@ -41,46 +41,135 @@ document.addEventListener('DOMContentLoaded', function() {
   // Load dashboard stats
   async function loadDashboardStats() {
     try {
-      const stats = await api.getDashboardStats()
-      updateStats(stats)
+      console.log('Cargando estadísticas del dashboard...')
+      const response = await api.request('/api/dashboard/stats', 'GET')
+      console.log('Respuesta recibida:', response)
       
-      // Actualizar próximo partido
-      updateNextMatch(stats.nextMatch)
-      
-      // Actualizar gráfico con datos reales
-      updateChart(stats.monthlyStats)
-      
-      // Actualizar estadísticas globales
-      updateGlobalStats(stats.globalStats)
-      
-      // Actualizar rankings
-      updateRankings(stats.rankings)
-      
+      if (response.success && response.data) {
+        const stats = response.data
+        console.log('Datos parseados:', stats)
+        
+        // Actualizar estadísticas del usuario en el header
+        if (stats.user) {
+          userName.textContent = `${stats.user.nombre} ${stats.user.apellido}`
+          userEmail.textContent = stats.user.email
+        }
+        
+        // Actualizar próximo partido
+        updateNextMatch(stats.nextMatch)
+        
+        // Actualizar estadísticas del sistema
+        updateSystemStats(stats.systemStats)
+      } else {
+        console.error('Error en la respuesta:', response.message)
+      }
     } catch (error) {
       console.error('Error loading dashboard stats:', error)
-      // Load default stats if API fails
-      loadDefaultStats()
     }
   }
 
-  // Update stats display
-  function updateStats(stats) {
-    // Estadísticas del usuario
-    if (stats.globalStats) {
-      userTournaments.textContent = stats.globalStats.torneos || 0
-      userMatches.textContent = stats.globalStats.totalPartidos || 0
+  // Actualizar estadísticas del sistema
+  function updateSystemStats(systemStats) {
+    console.log('updateSystemStats llamado con:', systemStats)
+    
+    if (!systemStats) {
+      console.warn('systemStats es null o undefined')
+      return
     }
     
-    // Mantener estadísticas generales si existen
-    if (stats.activeTournaments !== undefined) {
-      document.getElementById('activeTournaments').textContent = stats.activeTournaments || 0
-      document.getElementById('totalMatches').textContent = stats.totalMatches || 0
-      document.getElementById('participationRate').textContent = `${stats.participationRate || 0}%`
-      document.getElementById('totalPlayers').textContent = stats.totalPlayers || 0
-      document.getElementById('pendingInscriptions').textContent = stats.pendingInscriptions || 0
-      document.getElementById('completionRate').textContent = `${stats.completionRate || 0}%`
-      document.getElementById('avgMatchDuration').textContent = stats.avgMatchDuration || 0
+    // Torneos Activos
+    const torneosActivosEl = document.getElementById('activeTournaments')
+    if (torneosActivosEl) {
+      torneosActivosEl.textContent = systemStats.torneosActivos || 0
+      console.log('Torneos activos:', systemStats.torneosActivos)
+      createSparkline('torneosSparkline', [1, 2, 1, 3, 2, systemStats.torneosActivos || 0], '#ff8c42')
     }
+    
+    // Partidos Jugados
+    const partidosEl = document.getElementById('matchesPlayed')
+    if (partidosEl) {
+      partidosEl.textContent = systemStats.partidosJugados || 0
+      console.log('Partidos jugados:', systemStats.partidosJugados)
+      const val = systemStats.partidosJugados || 0
+      createSparkline('partidosSparkline', [Math.max(0, val-4), Math.max(0, val-3), Math.max(0, val-2), Math.max(0, val-1), val, val], '#4169e1')
+    }
+    
+    // Actividad de Torneos (torneos del mes)
+    const actividadEl = document.getElementById('tournamentActivity')
+    if (actividadEl) {
+      actividadEl.textContent = systemStats.torneosMes || 0
+      console.log('Torneos del mes:', systemStats.torneosMes)
+    }
+    
+    // Deportistas Registrados
+    const deportistasEl = document.getElementById('registeredPlayers')
+    if (deportistasEl) {
+      deportistasEl.textContent = systemStats.totalDeportistas || 0
+      console.log('Total deportistas:', systemStats.totalDeportistas)
+      const val = systemStats.totalDeportistas || 0
+      createSparkline('deportistasSparkline', [Math.max(0, val-3), Math.max(0, val-2), Math.max(0, val-1), val, val, val+1], '#ffd700')
+    }
+    
+    // Tasa de Participación
+    const tasaEl = document.getElementById('participationRate')
+    if (tasaEl) {
+      tasaEl.textContent = `${systemStats.tasaParticipacion || 0}%`
+      console.log('Tasa participación:', systemStats.tasaParticipacion)
+      const tasa = systemStats.tasaParticipacion || 0
+      createSparkline('participacionSparkline', [Math.max(0, tasa-15), Math.max(0, tasa-10), Math.max(0, tasa-5), tasa, tasa, tasa], '#10b981')
+    }
+    
+    // Subtexto de participación
+    const subtextEl = document.getElementById('participationSubtext')
+    if (subtextEl) {
+      const deportistas_activos = Math.round((systemStats.totalDeportistas || 0) * (systemStats.tasaParticipacion || 0) / 100)
+      subtextEl.textContent = `${deportistas_activos} de ${systemStats.totalDeportistas || 0}`
+    }
+  }
+  
+  // Crear gráfico sparkline
+  function createSparkline(canvasId, data, color) {
+    const canvas = document.getElementById(canvasId)
+    if (!canvas) return
+    
+    const ctx = canvas.getContext('2d')
+    const width = canvas.width
+    const height = canvas.height
+    
+    // Limpiar canvas
+    ctx.clearRect(0, 0, width, height)
+    
+    // Encontrar min y max
+    const max = Math.max(...data, 1)
+    const min = Math.min(...data, 0)
+    const range = max - min || 1
+    
+    // Calcular puntos
+    const points = data.map((value, index) => ({
+      x: (index / (data.length - 1)) * width,
+      y: height - ((value - min) / range) * (height - 4) - 2
+    }))
+    
+    // Dibujar área bajo la línea
+    ctx.beginPath()
+    ctx.moveTo(points[0].x, height)
+    points.forEach(point => ctx.lineTo(point.x, point.y))
+    ctx.lineTo(points[points.length - 1].x, height)
+    ctx.closePath()
+    
+    const gradient = ctx.createLinearGradient(0, 0, 0, height)
+    gradient.addColorStop(0, color + '40')
+    gradient.addColorStop(1, color + '00')
+    ctx.fillStyle = gradient
+    ctx.fill()
+    
+    // Dibujar línea
+    ctx.beginPath()
+    ctx.moveTo(points[0].x, points[0].y)
+    points.forEach(point => ctx.lineTo(point.x, point.y))
+    ctx.strokeStyle = color
+    ctx.lineWidth = 2
+    ctx.stroke()
   }
   
   // Actualizar próximo partido
@@ -89,246 +178,40 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!container) return
     
     if (!nextMatch) {
-      container.innerHTML = '<p class="no-match">No tienes partidos programados</p>'
+      container.innerHTML = '<div class="next-match-card"><p style="text-align: center; color: #666;">No tienes partidos programados</p></div>'
       return
     }
     
     const fecha = nextMatch.fecha ? new Date(nextMatch.fecha).toLocaleDateString('es-ES', {
       day: '2-digit',
-      month: 'short',
-      year: 'numeric'
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     }) : 'Fecha por definir'
     
     container.innerHTML = `
       <div class="next-match-card">
-        <div class="match-info">
-          <span class="match-tournament">${nextMatch.torneo}</span>
-          <span class="match-round">${nextMatch.ronda || 'Primera Ronda'}</span>
+        <div class="match-header">
+          <span class="tournament-badge">${nextMatch.torneo}</span>
+          <span class="round-badge">${nextMatch.ronda || 'Por definir'}</span>
         </div>
-        <div class="match-players">
-          <div class="player-vs">
-            <span class="vs-text">VS</span>
-          </div>
-          <div class="rival-info">
-            <span class="rival-name">${nextMatch.rival.nombre}</span>
-            ${nextMatch.rival.pais ? `<span class="rival-country">${nextMatch.rival.pais}</span>` : ''}
+        <div class="match-opponent">
+          <div class="opponent-flag">${nextMatch.rival.pais || '🌍'}</div>
+          <div class="opponent-info">
+            <h4>${nextMatch.rival.nombre}</h4>
+            <p class="match-date">${fecha}</p>
           </div>
         </div>
-        <div class="match-date">
-          📅 ${fecha}
-        </div>
       </div>
     `
   }
   
-  // Actualizar gráfico con datos reales
-  function updateChart(monthlyStats) {
-    if (!monthlyStats || monthlyStats.length === 0) {
-      return
-    }
-    
-    const ctx = document.getElementById('activityChart')
-    if (!ctx) return
-
-    const labels = monthlyStats.map(m => m.mes)
-    const partidos = monthlyStats.map(m => m.partidos)
-    const victorias = monthlyStats.map(m => m.victorias)
-
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Partidos Jugados',
-          data: partidos,
-          borderColor: '#4169e1',
-          backgroundColor: 'rgba(65, 105, 225, 0.1)',
-          tension: 0.4
-        }, {
-          label: 'Victorias',
-          data: victorias,
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          tension: 0.4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-            position: 'bottom'
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: 'rgba(0, 0, 0, 0.1)'
-            }
-          },
-          x: {
-            grid: {
-              display: false
-            }
-          }
-        }
-      }
-    })
-  }
+  // Actualizar gráfico con datos reales (eliminado - no se usa)
   
-  // Actualizar estadísticas globales
-  function updateGlobalStats(globalStats) {
-    if (!globalStats) return
-    
-    const container = document.querySelector('.global-stats-container')
-    if (!container) return
-    
-    const winRate = globalStats.winRate || 0
-    const victorias = globalStats.victorias || 0
-    const derrotas = globalStats.derrotas || 0
-    const total = globalStats.totalPartidos || 0
-    
-    container.innerHTML = `
-      <div class="stats-chart">
-        <canvas id="globalStatsChart"></canvas>
-      </div>
-      <div class="stats-summary">
-        <div class="stat-item">
-          <span class="stat-label">Victorias</span>
-          <span class="stat-value win">${victorias}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Derrotas</span>
-          <span class="stat-value loss">${derrotas}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Win Rate</span>
-          <span class="stat-value">${winRate}%</span>
-        </div>
-      </div>
-    `
-    
-    // Crear gráfico de dona
-    const chartCtx = document.getElementById('globalStatsChart')
-    if (chartCtx) {
-      new Chart(chartCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Victorias', 'Derrotas'],
-          datasets: [{
-            data: [victorias, derrotas],
-            backgroundColor: ['#10b981', '#ef4444'],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            }
-          }
-        }
-      })
-    }
-  }
+  // Actualizar estadísticas globales (eliminado - no se usa)
   
-  // Actualizar rankings
-  function updateRankings(rankings) {
-    if (!rankings) return
-    
-    const container = document.querySelector('.rankings-container')
-    if (!container) return
-    
-    container.innerHTML = `
-      <div class="ranking-card">
-        <h4>Ranking General</h4>
-        <div class="ranking-position">#${rankings.general}</div>
-        <span class="ranking-total">de ${rankings.totalJugadores}</span>
-      </div>
-      <div class="ranking-card">
-        <h4>Singles</h4>
-        <div class="ranking-position">#${rankings.singles}</div>
-      </div>
-      <div class="ranking-card">
-        <h4>Doubles</h4>
-        <div class="ranking-position">#${rankings.doubles}</div>
-      </div>
-    `
-  }
-
-  // Load default stats when API is not available
-  function loadDefaultStats() {
-    const defaultStats = {
-      activeTournaments: 3,
-      totalMatches: 24,
-      participationRate: 75,
-      totalPlayers: 45,
-      pendingInscriptions: 8,
-      completionRate: 85,
-      avgMatchDuration: 45,
-      userTournaments: 2,
-      userMatches: 12
-    }
-    updateStats(defaultStats)
-  }
-
-  // Initialize chart
-  function initChart() {
-    const ctx = document.getElementById('activityChart')
-    if (!ctx) return
-
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-        datasets: [{
-          label: 'Torneos Activos',
-          data: [2, 3, 2, 4, 3, 5],
-          borderColor: '#4169e1',
-          backgroundColor: 'rgba(65, 105, 225, 0.1)',
-          tension: 0.4
-        }, {
-          label: 'Partidos Jugados',
-          data: [12, 18, 15, 22, 20, 28],
-          borderColor: '#ff8c42',
-          backgroundColor: 'rgba(255, 140, 66, 0.1)',
-          tension: 0.4
-        }, {
-          label: 'Inscripciones',
-          data: [8, 12, 10, 15, 18, 22],
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          tension: 0.4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: 'rgba(0, 0, 0, 0.1)'
-            }
-          },
-          x: {
-            grid: {
-              display: false
-            }
-          }
-        }
-      }
-    })
-  }
+  // Actualizar rankings (eliminado - no se usa)
 
   // Set date inputs to current month
   function setDefaultDates() {
@@ -344,7 +227,6 @@ document.addEventListener('DOMContentLoaded', function() {
   function initDashboard() {
     loadUserData()
     loadDashboardStats()
-    initChart()
     setDefaultDates()
   }
 
