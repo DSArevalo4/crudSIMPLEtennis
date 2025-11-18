@@ -137,12 +137,20 @@ def registrar_resultado(partido_id):
     """
     POST /partidos/<partido_id>/resultado
     Registra el resultado de un partido.
+    Al finalizar, crea automáticamente el siguiente partido y envía notificaciones.
     Headers requeridos:
         X-User-ID: ID del usuario
         X-User-Perfil: Perfil del usuario
     Parámetros (JSON):
         ganador_id (int): ID del deportista ganador
-        resultado (str): Resultado del partido
+        resultado (str o dict): Resultado del partido con sets
+    
+    Respuesta:
+        {
+            "partido_finalizado": {...},
+            "siguiente_partido": {...} o null,
+            "mensaje": "Resultado registrado exitosamente"
+        }
     """
     try:
         usuario_id = request.headers.get('X-User-ID')
@@ -159,8 +167,8 @@ def registrar_resultado(partido_id):
             return jsonify({'error': 'ganador_id y resultado son obligatorios'}), 400
 
         service = PartidoService(get_db_session())
-        partido = service.registrar_resultado(partido_id, ganador_id, resultado, int(usuario_id), usuario_perfil)
-        return jsonify(partido.as_dict()), 200
+        response = service.registrar_resultado(partido_id, ganador_id, resultado, int(usuario_id), usuario_perfil)
+        return jsonify(response), 200
         
     except ValueError as e:
         return jsonify({'error': str(e)}), 400

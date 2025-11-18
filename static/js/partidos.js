@@ -308,7 +308,12 @@ async function saveResultado() {
         const sets1 = parseInt(document.getElementById('sets-deportista1').value);
         const sets2 = parseInt(document.getElementById('sets-deportista2').value);
         const detalle = document.getElementById('resultado-detalle').value;
-        const estado = document.getElementById('estado-partido').value;
+
+        // Validar que se ingresaron los sets
+        if (isNaN(sets1) || isNaN(sets2)) {
+            showNotification('Por favor ingrese los sets ganados', 'error');
+            return;
+        }
 
         // Determinar ganador
         let ganadorId = null;
@@ -316,35 +321,54 @@ async function saveResultado() {
             ganadorId = currentPartido.deportista1_id;
         } else if (sets2 > sets1) {
             ganadorId = currentPartido.deportista2_id;
+        } else {
+            showNotification('Debe haber un ganador (sets diferentes)', 'error');
+            return;
         }
 
-        const data = {
-            sets_ganados_deportista1: sets1,
-            sets_ganados_deportista2: sets2,
-            resultado_detalle: detalle,
-            estado: estado,
-            ganador_id: ganadorId
+        // Construir resultado JSON con estructura de sets
+        const resultado = {
+            sets: [
+                { jugador1: sets1, jugador2: sets2 }
+            ],
+            detalle: detalle
         };
 
-        console.log('Guardando resultado:', data);
-        const response = await api.put(`/api/partidos/${currentPartido.id}`, data);
+        const data = {
+            ganador_id: ganadorId,
+            resultado: resultado
+        };
+
+        console.log('Registrando resultado:', data);
+        
+        // Usar el endpoint específico para registrar resultados
+        const response = await api.post(`/api/partidos/${currentPartido.id}/resultado`, data);
         
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error || 'Error al guardar resultado');
+            throw new Error(error.error || 'Error al registrar resultado');
         }
 
         const result = await response.json();
-        console.log('Resultado guardado:', result);
+        console.log('Resultado registrado:', result);
         
-        showNotification('Resultado registrado exitosamente', 'success');
+        // Mostrar mensaje con información del siguiente partido
+        let mensaje = '✅ Resultado registrado exitosamente';
+        if (result.siguiente_partido) {
+            const siguientePartido = result.siguiente_partido;
+            const rival = siguientePartido.deportista2_nombre || 'Por definir';
+            mensaje += `\n\n🎾 Siguiente partido creado:\n${siguientePartido.ronda}\nRival: ${rival}`;
+        }
+        
+        showNotification(mensaje, 'success');
         closeResultadoModal();
         await loadPartidos();
     } catch (error) {
-        console.error('Error guardando resultado:', error);
+        console.error('Error registrando resultado:', error);
         showNotification(error.message, 'error');
     }
 }
+
 
 async function deletePartido(partidoId) {
     if (!confirm('¿Está seguro de eliminar este partido?')) {
