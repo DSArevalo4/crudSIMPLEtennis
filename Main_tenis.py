@@ -96,48 +96,25 @@ def notificaciones():
 @require_auth
 def dashboard_stats():
     """API para obtener estadísticas del dashboard"""
+    session = get_db_session()
     try:
-        session = get_db_session()
-        
-        # Estadísticas básicas
-        total_usuarios = session.query(Usuario).filter(Usuario.activo == True).count()
-        total_torneos = session.query(Torneo).count()
-        total_partidos = session.query(Partido).count()
-        total_inscripciones = session.query(Inscripcion).count()
-        
-        # Torneos activos (en_curso)
-        torneos_activos = session.query(Torneo).filter(Torneo.estado == 'en_curso').count()
-        
-        # Inscripciones pendientes
-        inscripciones_pendientes = session.query(Inscripcion).filter(Inscripcion.estado == 'pendiente').count()
-        
-        # Estadísticas del usuario actual
+        from services.dashboard_service import DashboardService
         user_id = get_jwt_identity()
-        user_torneos = session.query(Inscripcion).filter(
-            Inscripcion.deportista_id == user_id
-        ).count()
         
-        user_partidos = session.query(Partido).filter(
-            (Partido.deportista1_id == user_id) | (Partido.deportista2_id == user_id)
-        ).count()
+        service = DashboardService(session)
+        stats = service.get_user_stats(user_id)
         
-        stats = {
-            'activeTournaments': torneos_activos,
-            'totalMatches': total_partidos,
-            'participationRate': 75,  # Valor por defecto
-            'totalPlayers': total_usuarios,
-            'pendingInscriptions': inscripciones_pendientes,
-            'completionRate': 85,  # Valor por defecto
-            'avgMatchDuration': 45,  # Valor por defecto
-            'userTournaments': user_torneos,
-            'userMatches': user_partidos
-        }
+        if not stats:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
         
-        session.close()
-        return jsonify(stats)
-        
+        return jsonify(stats), 200
     except Exception as e:
+        print(f"Error obteniendo estadísticas: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+    finally:
+        session.close()
 
 # API endpoints para torneos
 # ---------------------------------------------------------
