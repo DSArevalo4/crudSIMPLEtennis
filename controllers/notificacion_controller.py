@@ -5,7 +5,7 @@ from services.notificacion_service import NotificacionService
 
 notificacion_bp = Blueprint('notificacion_bp', __name__)
 
-@notificacion_bp.route('/api/notificaciones/deportista/<int:deportista_id>', methods=['GET'])
+@notificacion_bp.route('/notificaciones/deportista/<int:deportista_id>', methods=['GET'])
 def get_notificaciones_deportista(deportista_id):
     """Obtiene las notificaciones de un deportista"""
     db = get_db_session()
@@ -26,7 +26,7 @@ def get_notificaciones_deportista(deportista_id):
     finally:
         db.close()
 
-@notificacion_bp.route('/api/notificaciones/<int:notificacion_id>/leer', methods=['PUT'])
+@notificacion_bp.route('/notificaciones/<int:notificacion_id>/leer', methods=['PUT'])
 def marcar_leida(notificacion_id):
     """Marca una notificación como leída"""
     db = get_db_session()
@@ -49,7 +49,7 @@ def marcar_leida(notificacion_id):
     finally:
         db.close()
 
-@notificacion_bp.route('/api/notificaciones/deportista/<int:deportista_id>/leer-todas', methods=['PUT'])
+@notificacion_bp.route('/notificaciones/deportista/<int:deportista_id>/leer-todas', methods=['PUT'])
 def marcar_todas_leidas(deportista_id):
     """Marca todas las notificaciones como leídas"""
     db = get_db_session()
@@ -63,7 +63,7 @@ def marcar_todas_leidas(deportista_id):
     finally:
         db.close()
 
-@notificacion_bp.route('/api/notificaciones/deportista/<int:deportista_id>/no-leidas/count', methods=['GET'])
+@notificacion_bp.route('/notificaciones/deportista/<int:deportista_id>/no-leidas/count', methods=['GET'])
 def contar_no_leidas(deportista_id):
     """Cuenta las notificaciones no leídas"""
     db = get_db_session()
@@ -77,7 +77,7 @@ def contar_no_leidas(deportista_id):
     finally:
         db.close()
 
-@notificacion_bp.route('/api/notificaciones/generar-partidos-programados', methods=['POST'])
+@notificacion_bp.route('/notificaciones/generar-partidos-programados', methods=['POST'])
 def generar_notificaciones_partidos():
     """Genera notificaciones para todos los partidos programados"""
     db = get_db_session()

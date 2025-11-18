@@ -1,5 +1,6 @@
 // Funcionalidad de torneos
 let currentEditingTorneoId = null;
+let currentTorneoEnCuadro = null; // Guardar el torneo actual del cuadro
 
 // Cargar lista de torneos
 async function loadTorneos() {
@@ -223,7 +224,7 @@ async function viewTorneo(torneoId) {
 }
 
 // Mostrar cuadro de tenis
-function showTennisBracket(torneo, inscripciones) {
+async function showTennisBracket(torneo, inscripciones) {
     const modal = document.getElementById('tennisBracketModal');
     const title = document.getElementById('bracketTitle');
     const container = document.getElementById('tennisBracketContainer');
@@ -233,48 +234,83 @@ function showTennisBracket(torneo, inscripciones) {
         return;
     }
     
+    // Guardar torneo actual
+    currentTorneoEnCuadro = { torneo, inscripciones };
+    
     title.textContent = `Cuadro de Tenis - ${torneo.nombre}`;
     
-    // Generar cuadro de tenis
-    container.innerHTML = generateTennisBracket(inscripciones);
+    // Cargar partidos del torneo
+    try {
+        const partidos = await api.request(`/api/torneos/${torneo.id}/partidos`);
+        console.log('Partidos del torneo:', partidos);
+        
+        // Generar cuadro de tenis con los partidos
+        container.innerHTML = generateTennisBracket(inscripciones, partidos);
+    } catch (error) {
+        console.error('Error cargando partidos del torneo:', error);
+        // Si falla, mostrar cuadro básico sin partidos
+        container.innerHTML = generateTennisBracket(inscripciones, []);
+    }
     
     modal.style.display = 'flex';
 }
 
+// Función global para recargar el cuadro actual
+window.recargarCuadroActual = async function() {
+    if (currentTorneoEnCuadro) {
+        console.log('Recargando cuadro del torneo:', currentTorneoEnCuadro.torneo.nombre);
+        await showTennisBracket(currentTorneoEnCuadro.torneo, currentTorneoEnCuadro.inscripciones);
+    }
+};
+
 // Generar cuadro de tenis
-function generateTennisBracket(inscripciones) {
+function generateTennisBracket(inscripciones, partidos = []) {
     if (inscripciones.length === 0) {
         return '<div class="empty-bracket">No hay inscripciones en este torneo</div>';
     }
     
-    // Ordenar inscripciones por fecha de inscripción
-    const sortedInscripciones = inscripciones.sort((a, b) => new Date(a.fecha_inscripcion) - new Date(b.fecha_inscripcion));
+    // Agrupar partidos por ronda
+    const partidosPorRonda = {};
+    partidos.forEach(partido => {
+        const rondaNum = partido.numero_ronda || 1;
+        if (!partidosPorRonda[rondaNum]) {
+            partidosPorRonda[rondaNum] = [];
+        }
+        partidosPorRonda[rondaNum].push(partido);
+    });
+    
+    console.log('Partidos por ronda:', partidosPorRonda);
     
     // Calcular número de rondas necesarias
-    const numRounds = Math.ceil(Math.log2(sortedInscripciones.length));
-    const totalSlots = Math.pow(2, numRounds);
+    const numRounds = Math.ceil(Math.log2(inscripciones.length));
     
     let html = '<div class="tennis-bracket">';
     
     // Generar rondas
     for (let round = 0; round < numRounds; round++) {
         const roundName = getRoundName(round, numRounds);
-        const slotsInRound = Math.pow(2, numRounds - round);
+        const rondaNum = round + 1;
+        const partidosRonda = partidosPorRonda[rondaNum] || [];
         
         html += `<div class="bracket-round">
             <h3 class="round-title">${roundName}</h3>
             <div class="round-matches">`;
         
-        for (let slot = 0; slot < slotsInRound; slot++) {
-            const isFirstRound = round === 0;
-            const isLastRound = round === numRounds - 1;
-            
-            html += `<div class="match-slot ${isFirstRound ? 'first-round' : ''} ${isLastRound ? 'final' : ''}">
-                <div class="player-slot">
-                    ${getPlayerForSlot(sortedInscripciones, round, slot, totalSlots)}
-                </div>
-                ${!isLastRound ? '<div class="match-connector"></div>' : ''}
-            </div>`;
+        // Mostrar partidos de esta ronda
+        if (partidosRonda.length > 0) {
+            partidosRonda.forEach(partido => {
+                html += renderPartidoEnCuadro(partido);
+            });
+        } else {
+            // Mostrar slots vacíos si no hay partidos aún
+            const numPartidos = Math.pow(2, numRounds - round - 1);
+            for (let i = 0; i < numPartidos; i++) {
+                html += `<div class="match-slot">
+                    <div class="player-slot">Por definir</div>
+                    <div class="vs-text">vs</div>
+                    <div class="player-slot">Por definir</div>
+                </div>`;
+            }
         }
         
         html += '</div></div>';
@@ -282,6 +318,75 @@ function generateTennisBracket(inscripciones) {
     
     html += '</div>';
     return html;
+}
+
+// Renderizar un partido en el cuadro
+function renderPartidoEnCuadro(partido) {
+    const deportista1 = partido.deportista1_nombre || 'Por definir';
+    const deportista2 = partido.deportista2_nombre || 'Por definir';
+    const ganadorId = partido.ganador_id;
+    const estado = partido.estado || 'programado';
+    
+    const esGanador1 = ganadorId === partido.deportista1_id;
+    const esGanador2 = ganadorId === partido.deportista2_id;
+    
+    // Obtener sets ganados del resultado
+    let sets1 = '-';
+    let sets2 = '-';
+    
+    if (partido.resultado && estado === 'finalizado') {
+        try {
+            const resultado = typeof partido.resultado === 'string' ? JSON.parse(partido.resultado) : partido.resultado;
+            if (resultado.sets && Array.isArray(resultado.sets)) {
+                let setsGanados1 = 0;
+                let setsGanados2 = 0;
+                resultado.sets.forEach(set => {
+                    if (set.jugador1 > set.jugador2) setsGanados1++;
+                    if (set.jugador2 > set.jugador1) setsGanados2++;
+                });
+                sets1 = setsGanados1;
+                sets2 = setsGanados2;
+            }
+        } catch (e) {
+            console.error('Error parseando resultado:', e);
+        }
+    }
+    
+    const fecha = partido.fecha_partido ? new Date(partido.fecha_partido).toLocaleDateString('es-ES', { 
+        day: '2-digit', 
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }) : '';
+    
+    return `
+        <div class="bracket-match ${estado}">
+            <div class="match-header">
+                ${estado === 'finalizado' ? '<span class="match-status finalized">✓</span>' : ''}
+                ${fecha ? `<span class="match-date">${fecha}</span>` : ''}
+            </div>
+            <div class="match-players">
+                <div class="player-row ${esGanador1 ? 'winner' : ''} ${estado === 'finalizado' && !esGanador1 ? 'loser' : ''}">
+                    <div class="player-info">
+                        ${esGanador1 ? '<span class="trophy-icon">🏆</span>' : ''}
+                        <span class="player-name">${deportista1}</span>
+                    </div>
+                    <div class="player-score ${esGanador1 ? 'winner-score' : ''}">${sets1}</div>
+                </div>
+                <div class="player-row ${esGanador2 ? 'winner' : ''} ${estado === 'finalizado' && !esGanador2 ? 'loser' : ''}">
+                    <div class="player-info">
+                        ${esGanador2 ? '<span class="trophy-icon">🏆</span>' : ''}
+                        <span class="player-name">${deportista2}</span>
+                    </div>
+                    <div class="player-score ${esGanador2 ? 'winner-score' : ''}">${sets2}</div>
+                </div>
+            </div>
+            ${partido.resultado_detalle && estado === 'finalizado' ? `
+                <div class="match-details">${partido.resultado_detalle}</div>
+            ` : ''}
+        </div>
+    `;
 }
 
 // Obtener nombre de la ronda

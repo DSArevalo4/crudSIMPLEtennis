@@ -233,3 +233,29 @@ def inscripciones_by_torneo(torneo_id):
         return jsonify({'error': 'Error obteniendo inscripciones', 'detail': str(e)}), 500
     finally:
         session.close()
+
+@torneo_bp.route('/torneos/<int:torneo_id>/partidos', methods=['GET'])
+@require_auth
+def partidos_by_torneo(torneo_id):
+    """Obtener partidos de un torneo específico"""
+    session = get_db_session()
+    try:
+        from models.partido_model import Partido
+        from sqlalchemy.orm import joinedload
+        
+        partidos = session.query(Partido).filter(
+            Partido.torneo_id == torneo_id
+        ).options(
+            joinedload(Partido.torneo),
+            joinedload(Partido.deportista1),
+            joinedload(Partido.deportista2),
+            joinedload(Partido.ganador),
+            joinedload(Partido.perdedor)
+        ).order_by(Partido.numero_ronda, Partido.posicion_cuadro).all()
+        
+        data = [partido.as_dict() for partido in partidos]
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': 'Error obteniendo partidos', 'detail': str(e)}), 500
+    finally:
+        session.close()

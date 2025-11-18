@@ -358,6 +358,15 @@ async function saveResultado() {
         showNotification(mensaje, 'success');
         closeResultadoModal();
         await loadPartidos();
+        
+        // Si el cuadro del torneo está abierto, recargarlo
+        const cuadroModal = document.getElementById('tennisBracketModal');
+        if (cuadroModal && cuadroModal.style.display !== 'none') {
+            console.log('Recargando cuadro del torneo...');
+            if (typeof window.recargarCuadroActual === 'function') {
+                window.recargarCuadroActual();
+            }
+        }
     } catch (error) {
         console.error('Error registrando resultado:', error);
         showNotification(error.message, 'error');
